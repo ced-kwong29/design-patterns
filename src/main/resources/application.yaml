@@ -1,3 +1,44 @@
 spring:
   application:
     name: design-patterns
+
+  # PostgreSQL - the plan relies on window functions for rolling averages.
+  # Override with env vars (e.g. SPRING_DATASOURCE_URL) or run via Docker.
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/watermonitor}
+    username: ${SPRING_DATASOURCE_USERNAME:watermonitor}
+    password: ${SPRING_DATASOURCE_PASSWORD:watermonitor}
+
+  jpa:
+    hibernate:
+      # Flyway owns the schema; Hibernate only validates it matches the entities.
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  # Redis - caches benchmark reference data and WebSocket session metadata.
+  data:
+    redis:
+      host: ${SPRING_REDIS_HOST:localhost}
+      port: ${SPRING_REDIS_PORT:6379}
+
+# Actuator - health check plus the custom domain metrics from the plan.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+# Scheduled job cron expressions (see the scheduler package).
+watermonitor:
+  scheduler:
+    anomaly-detection-cron: "0 0 2 * * *"      # nightly 02:00
+    goal-recalc-cron: "0 0 */6 * * *"          # every 6 hours
+    weekly-digest-cron: "0 0 8 * * SUN"        # Sunday 08:00
+    data-cleanup-cron: "0 0 3 1 * *"           # 1st of month 03:00
