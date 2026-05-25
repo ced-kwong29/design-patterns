@@ -10,9 +10,15 @@ async function request(path, options = {}) {
 }
 
 // Usage
-export const getUsage = () => request('/usage');
-export const getUsageSummary = () => request('/usage/summary');
-export const getBenchmark = () => request('/usage/benchmark');
+export const getUsage = (userId, from, to, category) => {
+  const params = new URLSearchParams({ userId, from, to });
+  if (category) params.set('category', category);
+  return request(`/usage?${params}`);
+};
+export const getUsageSummary = (userId, period = 'week') =>
+  request(`/usage/summary?userId=${userId}&period=${period}`);
+export const getBenchmark = (userId, category, region = 'DEFAULT') =>
+  request(`/usage/benchmark?userId=${userId}&category=${category}&region=${region}`);
 export const logUsage = (body) => request('/usage', { method: 'POST', body: JSON.stringify(body) });
 
 // Goals
