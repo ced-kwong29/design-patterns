@@ -2,12 +2,14 @@ package com.csen_359.design_patterns.service;
 
 import com.csen_359.design_patterns.report.MonthlyReportGenerator;
 import com.csen_359.design_patterns.report.Report;
+import com.csen_359.design_patterns.report.ReportGenerator;
 import com.csen_359.design_patterns.report.WeeklyReportGenerator;
 import org.springframework.stereotype.Service;
 
 /**
- * Orchestrates report generation by selecting the right Template Method
- * subclass for the requested period.
+ * Factory Method pattern - resolves a period string to the correct
+ * {@link ReportGenerator} (Template Method) subclass and delegates
+ * report creation to it.
  */
 @Service
 public class ReportService {
@@ -21,11 +23,22 @@ public class ReportService {
         this.monthlyReportGenerator = monthlyReportGenerator;
     }
 
-    public Report weeklyReport(Long userId) {
-        return weeklyReportGenerator.generate(userId);
-    }
-
-    public Report monthlyReport(Long userId) {
-        return monthlyReportGenerator.generate(userId);
+    /**
+     * Factory Method pattern - selects the appropriate {@link ReportGenerator}
+     * subclass for the given period and delegates report creation to it.
+     *
+     * <p>The resolved generator internally uses the Template Method pattern:
+     * its {@code final generate()} method defines a fixed algorithm skeleton
+     * (gather data → compute totals → break down by category → format), while
+     * each subclass overrides only the primitive operations that differ
+     * (e.g. the date window).
+     */
+    public Report generateReport(Long userId, String period) {
+        ReportGenerator generator = switch (period.toLowerCase()) {
+            case "weekly" -> weeklyReportGenerator;
+            case "monthly" -> monthlyReportGenerator;
+            default -> throw new IllegalArgumentException("Unknown report period: " + period);
+        };
+        return generator.generate(userId);
     }
 }
