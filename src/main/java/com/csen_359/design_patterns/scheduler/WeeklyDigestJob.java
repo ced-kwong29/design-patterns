@@ -25,7 +25,7 @@ public class WeeklyDigestJob {
     @Scheduled(cron = "${watermonitor.scheduler.weekly-digest-cron}")
     public void run() {
         log.info("WeeklyDigestJob starting");
-        // TODO Phase 8: for each active user, call reportService.weeklyReport
+        // TODO Phase 8: for each active user, call reportService.generateReport(userId, "weekly")
         //      and email or log the digest.
     }
 }
