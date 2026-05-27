@@ -5,6 +5,7 @@ import com.csen_359.design_patterns.domain.UsageEntry;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Stream;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
@@ -14,6 +15,9 @@ public interface UsageEntryRepository extends JpaRepository<UsageEntry, Long> {
 
     List<UsageEntry> findByUserIdAndLoggedAtBetween(
             Long userId, LocalDateTime from, LocalDateTime to);
+
+    List<UsageEntry> findByUserIdAndLoggedAtBetween(
+            Long userId, LocalDateTime from, LocalDateTime to, Pageable pageable);
 
     List<UsageEntry> findByUserIdAndCategoryAndLoggedAtBetween(
             Long userId, UsageCategory category, LocalDateTime from, LocalDateTime to);

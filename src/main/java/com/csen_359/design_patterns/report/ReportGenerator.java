@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
  * the date window via {@link #windowStart()} / {@link #windowEnd()}. Shared
  * steps have a default implementation here but remain overridable.
  */
-public abstract class ReportGenerator {
+public abstract class ReportGenerator implements ReportProvider {
 
     protected final UsageEntryRepository usageEntryRepository;
 

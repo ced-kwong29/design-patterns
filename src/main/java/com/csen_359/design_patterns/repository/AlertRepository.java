@@ -11,4 +11,6 @@ public interface AlertRepository extends JpaRepository<Alert, Long> {
 
     /** Unacknowledged alerts (soft-delete: acknowledged_at is null). */
     List<Alert> findByUserIdAndAcknowledgedAtIsNull(Long userId);
+
+    List<Alert> findTop10ByUserIdOrderByCreatedAtDesc(Long userId);
 }
