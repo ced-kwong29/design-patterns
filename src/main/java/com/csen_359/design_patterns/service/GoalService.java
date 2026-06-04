@@ -3,11 +3,16 @@ package com.csen_359.design_patterns.service;
 import com.csen_359.design_patterns.builder.GoalBuilder;
 import com.csen_359.design_patterns.domain.Goal;
 import com.csen_359.design_patterns.domain.GoalState;
+import com.csen_359.design_patterns.domain.UsageEntry;
 import com.csen_359.design_patterns.dto.CreateGoalRequest;
 import com.csen_359.design_patterns.event.GoalStatusChangedEvent;
 import com.csen_359.design_patterns.event.UsageLoggedEvent;
 import com.csen_359.design_patterns.repository.GoalRepository;
 import com.csen_359.design_patterns.repository.UsageEntryRepository;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,8 +65,20 @@ public class GoalService {
      */
     @Transactional(readOnly = true)
     public double progressPercent(Goal goal) {
-        // TODO Phase 5: sum usage in [startsAt, endsAt] and divide by target.
-        return 0.0;
+        if (goal.getTargetLitres() <= 0) {
+            return 0.0;
+        }
+        LocalDateTime from = goal.getStartsAt().atStartOfDay();
+        LocalDateTime to = goal.getEndsAt().atTime(LocalTime.MAX);
+
+        // A null category means the goal covers overall usage.
+        List<UsageEntry> entries = (goal.getCategory() == null)
+                ? usageEntryRepository.findByUserIdAndLoggedAtBetween(goal.getUserId(), from, to)
+                : usageEntryRepository.findByUserIdAndCategoryAndLoggedAtBetween(
+                        goal.getUserId(), goal.getCategory(), from, to);
+
+        double consumed = entries.stream().mapToDouble(UsageEntry::getLitres).sum();
+        return consumed / goal.getTargetLitres() * 100.0;
     }
 
     /**
@@ -69,9 +86,13 @@ public class GoalService {
      */
     @Transactional
     public void applyUsage(UsageLoggedEvent event) {
-        // TODO Phase 5: find the user's active goals for this category and
-        //      run recalculateState on each.
-        log.info("applyUsage() for user {} - not yet implemented", event.userId());
+        List<Goal> affected = goalRepository.findByUserId(event.userId()).stream()
+                .filter(goal -> !goal.getState().isTerminal())
+                .filter(goal -> goal.getCategory() == null || goal.getCategory() == event.category())
+                .toList();
+        affected.forEach(this::recalculateState);
+        log.info("applyUsage() re-evaluated {} goal(s) for user {}",
+                affected.size(), event.userId());
     }
 
     /**
@@ -108,8 +129,23 @@ public class GoalService {
         if (goal.getState().isTerminal()) {
             return goal.getState();
         }
-        // TODO Phase 5: implement the on-track / at-risk / missed / achieved
-        //      transitions from progress percentage and days remaining.
-        return goal.getState();
+
+        double progress = progressPercent(goal);
+        long daysLeft = ChronoUnit.DAYS.between(LocalDate.now(), goal.getEndsAt());
+
+        // Over the litre budget - the conservation goal can no longer be met.
+        if (progress > 100.0) {
+            return GoalState.MISSED;
+        }
+        // Period has elapsed while still within budget - the goal succeeded.
+        if (daysLeft < 0) {
+            return GoalState.ACHIEVED;
+        }
+        // Nearing the budget with little time to spare.
+        if (progress >= 80.0 && daysLeft <= 7) {
+            return GoalState.AT_RISK;
+        }
+        // Comfortable margin remaining.
+        return GoalState.ON_TRACK;
     }
 }

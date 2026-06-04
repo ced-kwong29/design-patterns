@@ -1,9 +1,15 @@
 package com.csen_359.design_patterns.anomaly;
 
+import com.csen_359.design_patterns.builder.AlertBuilder;
 import com.csen_359.design_patterns.domain.Alert;
+import com.csen_359.design_patterns.domain.AlertType;
 import com.csen_359.design_patterns.domain.UsageCategory;
 import com.csen_359.design_patterns.domain.UsageEntry;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Component;
 
 /**
@@ -21,9 +27,45 @@ public class SustainedElevationDetector implements AnomalyDetector {
 
     @Override
     public List<Alert> detect(List<UsageEntry> entries, UsageCategory category) {
-        // TODO Phase 4: build a 3-day rolling average and compare it to the
-        //      30-day baseline; raise a SUSTAINED_ELEVATION alert when the
-        //      ratio exceeds ELEVATION_THRESHOLD. Returns empty until done.
-        return List.of();
+        // Collapse the window into per-day totals (sorted oldest -> newest).
+        Map<LocalDate, Double> dailyTotals = entries.stream().collect(Collectors.groupingBy(
+                e -> e.getLoggedAt().toLocalDate(),
+                TreeMap::new,
+                Collectors.summingDouble(UsageEntry::getLitres)));
+
+        // Need a full rolling window plus some history to form a baseline.
+        if (dailyTotals.size() < ROLLING_WINDOW_DAYS + 1) {
+            return List.of();
+        }
+
+        double baseline = dailyTotals.values().stream()
+                .mapToDouble(Double::doubleValue)
+                .average()
+                .orElse(0.0);
+        if (baseline <= 0.0) {
+            return List.of();
+        }
+
+        List<Double> totals = List.copyOf(dailyTotals.values());
+        double rolling = totals.subList(totals.size() - ROLLING_WINDOW_DAYS, totals.size()).stream()
+                .mapToDouble(Double::doubleValue)
+                .average()
+                .orElse(0.0);
+
+        double ratio = rolling / baseline;
+        if (ratio <= ELEVATION_THRESHOLD) {
+            return List.of();
+        }
+
+        Alert alert = AlertBuilder.builder()
+                .userId(entries.get(0).getUserId())
+                .type(AlertType.SUSTAINED_ELEVATION)
+                .category(category)
+                .message(String.format(
+                        "Sustained elevation for %s: the last %d-day average (%.1f L/day) is %.0f%% of"
+                                + " the 30-day baseline (%.1f L/day).",
+                        category, ROLLING_WINDOW_DAYS, rolling, ratio * 100, baseline))
+                .build();
+        return List.of(alert);
     }
 }

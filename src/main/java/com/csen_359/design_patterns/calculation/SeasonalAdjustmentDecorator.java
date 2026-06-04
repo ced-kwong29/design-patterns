@@ -28,16 +28,17 @@ public class SeasonalAdjustmentDecorator implements UsageCalculator {
     @Override
     public double calculate(List<UsageEntry> entries) {
         double base = delegate.calculate(entries);
-        // TODO Phase 6: replace the flat factor with per-category weighting
-        //      (e.g. weight GARDEN entries down in summer). Identity for now.
+        // Normalise out the expected seasonal swing so totals stay comparable
+        // across the year: summer usage is naturally higher and is scaled down,
+        // winter usage is scaled up.
         return base * seasonFactor(season);
     }
 
     private static double seasonFactor(Season season) {
         return switch (season) {
-            case SUMMER -> 1.0; // TODO tune
-            case WINTER -> 1.0; // TODO tune
-            case SPRING, AUTUMN -> 1.0; // TODO tune
+            case SUMMER -> 0.90;        // usage runs ~10% high in summer
+            case WINTER -> 1.10;        // ~10% low in winter
+            case SPRING, AUTUMN -> 1.0; // treated as the neutral baseline
         };
     }
 }

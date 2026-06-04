@@ -75,8 +75,14 @@ public class AnomalyService {
      */
     @Transactional
     public void runNightlyDetection() {
-        // TODO Phase 4: iterate users x categories, compute the 30-day
-        //      baseline and call detectAndSave for each.
-        log.info("runNightlyDetection() - not yet implemented");
+        List<Long> userIds = usageEntryRepository.findDistinctUserIds();
+        int totalAlerts = 0;
+        for (Long userId : userIds) {
+            for (UsageCategory category : UsageCategory.values()) {
+                totalAlerts += detectAndSave(userId, category).size();
+            }
+        }
+        log.info("runNightlyDetection() swept {} user(s) x {} categor(ies), raised {} alert(s)",
+                userIds.size(), UsageCategory.values().length, totalAlerts);
     }
 }

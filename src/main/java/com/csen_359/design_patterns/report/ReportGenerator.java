@@ -1,5 +1,6 @@
 package com.csen_359.design_patterns.report;
 
+import com.csen_359.design_patterns.anomaly.CompositeDetector;
 import com.csen_359.design_patterns.domain.UsageCategory;
 import com.csen_359.design_patterns.domain.UsageEntry;
 import com.csen_359.design_patterns.repository.UsageEntryRepository;
@@ -25,9 +26,12 @@ import java.util.stream.Collectors;
 public abstract class ReportGenerator implements ReportProvider {
 
     protected final UsageEntryRepository usageEntryRepository;
+    protected final CompositeDetector compositeDetector;
 
-    protected ReportGenerator(UsageEntryRepository usageEntryRepository) {
+    protected ReportGenerator(UsageEntryRepository usageEntryRepository,
+                              CompositeDetector compositeDetector) {
         this.usageEntryRepository = usageEntryRepository;
+        this.compositeDetector = compositeDetector;
     }
 
     /** The template method - the invariant algorithm. Do not override. */
@@ -70,16 +74,32 @@ public abstract class ReportGenerator implements ReportProvider {
     }
 
     protected int detectAnomalies(List<UsageEntry> entries) {
-        // TODO Phase 8: run the anomaly detectors over the window and count hits.
-        return 0;
+        // Run every detector strategy per category over the window and tally hits.
+        Map<UsageCategory, List<UsageEntry>> byCategory = entries.stream()
+                .collect(Collectors.groupingBy(UsageEntry::getCategory));
+        int count = 0;
+        for (Map.Entry<UsageCategory, List<UsageEntry>> e : byCategory.entrySet()) {
+            count += compositeDetector.detectAll(e.getValue(), e.getKey()).size();
+        }
+        return count;
     }
 
     protected Report format(LocalDate from, LocalDate to, double total,
                             Map<UsageCategory, Double> byCategory, int anomalies) {
-        // TODO Phase 8: build a human-readable narrative (top category,
-        //      comparison to the prior period, goal outcomes).
-        String summary = reportType() + " report: " + total + " L across "
-                + byCategory.size() + " categories.";
+        String topCategory = byCategory.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(e -> String.format("%s (%.1f L)", e.getKey(), e.getValue()))
+                .orElse("no usage");
+
+        String summary = String.format(
+                "%s report (%s to %s): %.1f L across %d categor%s. Top use: %s. %s.",
+                reportType(), from, to, total, byCategory.size(),
+                byCategory.size() == 1 ? "y" : "ies",
+                topCategory,
+                anomalies == 0
+                        ? "No anomalies detected"
+                        : anomalies + " anomal" + (anomalies == 1 ? "y" : "ies") + " flagged");
+
         return new Report(reportType(), from, to, total, byCategory, anomalies, summary);
     }
 }

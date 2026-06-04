@@ -48,7 +48,7 @@ public class WaterDashboardFacade {
         UsageSummaryResponse summary  = usageService.summarise(userId, monthStart, now, "MONTHLY");
         List<Goal>  activeGoals       = goalRepository.findByUserIdAndState(userId, GoalState.ACTIVE);
         List<Alert> recentAlerts      = alertRepository.findTop10ByUserIdOrderByCreatedAtDesc(userId);
-        Report      latestReport      = reportService.generate(userId, "MONTHLY");
+        Report      latestReport      = reportService.generateReport(userId, "monthly");
 
         return new DashboardView(summary, activeGoals, recentAlerts, latestReport);
     }

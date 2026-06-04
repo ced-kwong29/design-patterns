@@ -15,18 +15,30 @@ public class RegionalBenchmarkDecorator implements UsageCalculator {
 
     private final UsageCalculator delegate;
     private final String regionCode;
+    private final double regionFactor;
 
+    /** Convenience overload for an unweighted region (factor 1.0). */
     public RegionalBenchmarkDecorator(UsageCalculator delegate, String regionCode) {
+        this(delegate, regionCode, 1.0);
+    }
+
+    /**
+     * @param regionFactor multiplier that re-expresses the wrapped total in
+     *        terms of a reference region (e.g. {@code referenceAvg / regionAvg}),
+     *        so a litre in a water-scarce region weighs more than one in a
+     *        water-rich region. The caller computes it from seeded benchmark
+     *        data; {@code 1.0} leaves the total unchanged.
+     */
+    public RegionalBenchmarkDecorator(UsageCalculator delegate, String regionCode,
+                                      double regionFactor) {
         this.delegate = delegate;
         this.regionCode = regionCode;
+        this.regionFactor = regionFactor > 0 ? regionFactor : 1.0;
     }
 
     @Override
     public double calculate(List<UsageEntry> entries) {
-        double base = delegate.calculate(entries);
-        // TODO Phase 6: look up the regional benchmark for `regionCode` and
-        //      express the result relative to it. Identity for now.
-        return base;
+        return delegate.calculate(entries) * regionFactor;
     }
 
     public String getRegionCode() {
