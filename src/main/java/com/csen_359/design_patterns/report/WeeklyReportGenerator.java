@@ -1,5 +1,6 @@
 package com.csen_359.design_patterns.report;
 
+import com.csen_359.design_patterns.anomaly.CompositeDetector;
 import com.csen_359.design_patterns.repository.UsageEntryRepository;
 import java.time.LocalDate;
 import org.springframework.stereotype.Component;
@@ -10,8 +11,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class WeeklyReportGenerator extends ReportGenerator {
 
-    public WeeklyReportGenerator(UsageEntryRepository usageEntryRepository) {
-        super(usageEntryRepository);
+    public WeeklyReportGenerator(UsageEntryRepository usageEntryRepository,
+                                 CompositeDetector compositeDetector) {
+        super(usageEntryRepository, compositeDetector);
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.csen_359.design_patterns.calculation.BaseUsageCalculator;
 import com.csen_359.design_patterns.calculation.RegionalBenchmarkDecorator;
 import com.csen_359.design_patterns.calculation.SeasonalAdjustmentDecorator;
 import com.csen_359.design_patterns.calculation.UsageCalculator;
+import com.csen_359.design_patterns.domain.RegionalBenchmark;
 import com.csen_359.design_patterns.domain.Season;
 import com.csen_359.design_patterns.domain.UsageCategory;
 import com.csen_359.design_patterns.domain.UsageEntry;
@@ -12,14 +13,17 @@ import com.csen_359.design_patterns.dto.BenchmarkResponse;
 import com.csen_359.design_patterns.dto.LogUsageRequest;
 import com.csen_359.design_patterns.dto.UsageSummaryResponse;
 import com.csen_359.design_patterns.event.UsageLoggedEvent;
+import com.csen_359.design_patterns.repository.RegionalBenchmarkRepository;
 import com.csen_359.design_patterns.repository.UsageEntryRepository;
 import com.csen_359.design_patterns.validation.UsageEntryHandler;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.io.Writer;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.springframework.context.ApplicationEventPublisher;
@@ -41,15 +45,24 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class UsageService {
 
+    /** Reference per-day litres used to weight scarce vs. water-rich regions. */
+    private static final double REFERENCE_LITRES_PER_DAY = 150.0;
+
+    /** Window, in days, used for the benchmark per-day average. */
+    private static final int BENCHMARK_DAYS = 30;
+
     private final UsageEntryRepository usageEntryRepository;
     private final UsageEntryHandler validationChain;
+    private final RegionalBenchmarkRepository regionalBenchmarkRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     public UsageService(UsageEntryRepository usageEntryRepository,
                         UsageEntryHandler usageValidationChain,
+                        RegionalBenchmarkRepository regionalBenchmarkRepository,
                         ApplicationEventPublisher eventPublisher) {
         this.usageEntryRepository = usageEntryRepository;
         this.validationChain = usageValidationChain;
+        this.regionalBenchmarkRepository = regionalBenchmarkRepository;
         this.eventPublisher = eventPublisher;
     }
 
@@ -69,9 +82,11 @@ public class UsageService {
         validationChain.handle(entry);
 
         // 3. Decorator - stack adjustments to compute adjusted litres.
+        Season season = seasonOf(entry.getLoggedAt().toLocalDate());
         UsageCalculator calculator = new RegionalBenchmarkDecorator(
-                new SeasonalAdjustmentDecorator(new BaseUsageCalculator(), currentSeason()),
-                "DEFAULT");
+                new SeasonalAdjustmentDecorator(new BaseUsageCalculator(), season),
+                "DEFAULT",
+                regionFactor("DEFAULT", entry.getCategory(), season));
         entry.setAdjustedLitres(calculator.calculate(List.of(entry)));
 
         // 4. Persist.
@@ -108,10 +123,40 @@ public class UsageService {
 
     @Transactional(readOnly = true)
     public BenchmarkResponse benchmark(Long userId, UsageCategory category, String regionCode) {
-        // TODO Phase 6: compute the user's per-day average, look up the regional
-        //      benchmark and express the percentile difference.
-        throw new UnsupportedOperationException(
-                "benchmark() is implemented in Phase 6 - Decorator & Benchmarking");
+        LocalDateTime to = LocalDateTime.now();
+        LocalDateTime from = to.minusDays(BENCHMARK_DAYS);
+        List<UsageEntry> entries = usageEntryRepository
+                .findByUserIdAndCategoryAndLoggedAtBetween(userId, category, from, to);
+
+        double userPerDay =
+                entries.stream().mapToDouble(UsageEntry::getLitres).sum() / BENCHMARK_DAYS;
+
+        Season season = seasonOf(LocalDate.now());
+        double regionalPerDay = regionalBenchmarkRepository
+                .findByRegionCodeAndCategoryAndSeason(regionCode, category, season)
+                .map(RegionalBenchmark::getAvgLitresPerDay)
+                .orElse(0.0);
+
+        double percentDifference = regionalPerDay > 0
+                ? (userPerDay - regionalPerDay) / regionalPerDay * 100.0
+                : 0.0;
+
+        String message;
+        if (regionalPerDay <= 0) {
+            message = String.format(
+                    "No %s benchmark for region %s in %s yet.", category, regionCode, season);
+        } else if (percentDifference <= 0) {
+            message = String.format(
+                    "You use %.0f%% less %s water than the %s average for %s.",
+                    Math.abs(percentDifference), category, regionCode, season);
+        } else {
+            message = String.format(
+                    "You use %.0f%% more %s water than the %s average for %s.",
+                    percentDifference, category, regionCode, season);
+        }
+
+        return new BenchmarkResponse(
+                category, userPerDay, regionalPerDay, percentDifference, message);
     }
 
     /**
@@ -145,8 +190,28 @@ public class UsageService {
         }
     }
 
-    private static Season currentSeason() {
-        // TODO Phase 6: derive the season from the logged-at date / hemisphere.
-        return Season.SUMMER;
+    /** Northern-hemisphere season for a given date. */
+    private static Season seasonOf(LocalDate date) {
+        return switch (date.getMonth()) {
+            case DECEMBER, JANUARY, FEBRUARY -> Season.WINTER;
+            case MARCH, APRIL, MAY -> Season.SPRING;
+            case JUNE, JULY, AUGUST -> Season.SUMMER;
+            case SEPTEMBER, OCTOBER, NOVEMBER -> Season.AUTUMN;
+        };
+    }
+
+    /**
+     * Weights a litre by regional scarcity: a region whose seeded average is
+     * below the reference uses water more sparingly, so each litre there counts
+     * for more. Falls back to 1.0 when the region/category/season is unseeded.
+     */
+    private double regionFactor(String regionCode, UsageCategory category, Season season) {
+        Optional<RegionalBenchmark> benchmark = regionalBenchmarkRepository
+                .findByRegionCodeAndCategoryAndSeason(regionCode, category, season);
+        return benchmark
+                .map(b -> b.getAvgLitresPerDay() > 0
+                        ? REFERENCE_LITRES_PER_DAY / b.getAvgLitresPerDay()
+                        : 1.0)
+                .orElse(1.0);
     }
 }
