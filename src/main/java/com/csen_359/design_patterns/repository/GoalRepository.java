@@ -12,6 +12,8 @@ public interface GoalRepository extends JpaRepository<Goal, Long> {
 
     List<Goal> findByUserId(Long userId);
 
+    List<Goal> findByUserIdAndState(Long userId, GoalState state);
+
     List<Goal> findByState(GoalState state);
 
     List<Goal> findByStateNot(GoalState state);
