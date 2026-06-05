@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { getWeeklyReport, getMonthlyReport } from '../api';
+import { getReport } from '../api';
+import { USER_ID } from '../constants';
 
 export default function ReportsPage() {
   const [report, setReport] = useState(null);
@@ -19,8 +20,8 @@ export default function ReportsPage() {
     <div>
       <h2>Reports</h2>
       <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        <button onClick={() => load(getWeeklyReport)}>Weekly</button>
-        <button onClick={() => load(getMonthlyReport)}>Monthly</button>
+        <button onClick={() => load(() => getReport("weekly", USER_ID))}>Weekly</button>
+        <button onClick={() => load(() => getReport("monthly", USER_ID))}>Monthly</button>
       </div>
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {report && (

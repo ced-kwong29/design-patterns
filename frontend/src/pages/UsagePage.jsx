@@ -1,8 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { getUsage, getUsageSummary } from '../api';
 import FaucetWidget from '../components/FaucetWidget';
-
-const USER_ID = 1;
+import { USER_ID } from '../constants';
 
 function now()  { return new Date().toISOString().slice(0, 19); }
 function week() { return new Date(Date.now() - 7 * 86400_000).toISOString().slice(0, 19); }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getGoals, createGoal } from '../api';
+import { USER_ID } from '../constants';
 
 export default function GoalsPage() {
   const [goals, setGoals] = useState([]);
@@ -10,14 +11,14 @@ export default function GoalsPage() {
   const [period, setPeriod] = useState('');
 
   useEffect(() => {
-    getGoals().then(setGoals).catch((err) => setError(err.message));
+    getGoals(USER_ID).then(setGoals).catch((err) => setError(err.message));
   }, []);
 
   async function handleSubmit(e) {
     e.preventDefault();
     try {
       await createGoal({ targetAmount: parseFloat(targetAmount), period });
-      const updated = await getGoals();
+      const updated = await getGoals(USER_ID);
       setGoals(updated);
       setTargetAmount('');
       setPeriod('');
