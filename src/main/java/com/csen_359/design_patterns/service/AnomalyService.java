@@ -1,6 +1,6 @@
 package com.csen_359.design_patterns.service;
 
-import com.csen_359.design_patterns.anomaly.CompositeDetector;
+import com.csen_359.design_patterns.service.anomaly.CompositeDetector;
 import com.csen_359.design_patterns.domain.Alert;
 import com.csen_359.design_patterns.domain.UsageCategory;
 import com.csen_359.design_patterns.domain.UsageEntry;

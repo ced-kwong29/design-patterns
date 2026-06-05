@@ -1,6 +1,6 @@
 package com.csen_359.design_patterns.service;
 
-import com.csen_359.design_patterns.builder.GoalBuilder;
+import com.csen_359.design_patterns.service.builder.GoalBuilder;
 import com.csen_359.design_patterns.domain.Goal;
 import com.csen_359.design_patterns.domain.GoalState;
 import com.csen_359.design_patterns.domain.UsageEntry;

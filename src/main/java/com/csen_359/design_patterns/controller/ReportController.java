@@ -1,6 +1,6 @@
 package com.csen_359.design_patterns.controller;
 
-import com.csen_359.design_patterns.report.Report;
+import com.csen_359.design_patterns.service.report.Report;
 import com.csen_359.design_patterns.service.ReportService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

@@ -1,6 +1,6 @@
 package com.csen_359.design_patterns.controller;
 
-import com.csen_359.design_patterns.validation.ValidationException;
+import com.csen_359.design_patterns.service.validation.ValidationException;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import org.springframework.http.HttpStatus;
