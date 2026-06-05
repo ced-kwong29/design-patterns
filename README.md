@@ -620,22 +620,21 @@ Thread-safe via `volatile` + synchronized double-checked lock. All values are re
 Spring's `ApplicationEventPublisher` decouples the write path from downstream reactions. Listeners run asynchronously after the transaction commits.
 
 ```mermaid
-graph TB
+graph TD
     US[UsageService] -->|publishes| ULE[UsageLoggedEvent]
-
-    ULE -->|listens| ADL[AnomalyDetectionListener]
-    ULE -->|listens| GPL[GoalProgressListener]
-    ULE -->|listens| WSPL[WebSocketPushListener]
-
-    ADL -->|publishes| ADE[AnomalyDetectedEvent]
     GS[GoalService] -->|publishes| GSCE[GoalStatusChangedEvent]
 
-    ADE -->|received by| WSPL
-    GSCE -->|received by| WSPL
+    ULE --> ADL[AnomalyDetectionListener]
+    ULE --> GPL[GoalProgressListener]
+    ULE --> WSPL[WebSocketPushListener]
 
-    WSPL -->|sends to| T1["topic/usage"]
-    WSPL -->|sends to| T2["topic/alerts"]
-    WSPL -->|sends to| T3["topic/goals"]
+    ADL -->|publishes| ADE[AnomalyDetectedEvent]
+    ADE --> WSPL
+    GSCE --> WSPL
+
+    WSPL --> T1["topic/usage"]
+    WSPL --> T2["topic/alerts"]
+    WSPL --> T3["topic/goals"]
 ```
 
 **Event records:**
