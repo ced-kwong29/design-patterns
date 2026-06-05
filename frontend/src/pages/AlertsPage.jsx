@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { getAlerts } from '../api';
+import { USER_ID } from '../constants';
 
 export default function AlertsPage() {
   const [alerts, setAlerts] = useState([]);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    getAlerts().then(setAlerts).catch((err) => setError(err.message));
+    getAlerts(USER_ID).then(setAlerts).catch((err) => setError(err.message));
   }, []);
 
   if (error) return <p style={{ color: 'red' }}>{error}</p>;

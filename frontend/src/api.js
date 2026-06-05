@@ -22,12 +22,11 @@ export const getBenchmark = (userId, category, region = 'DEFAULT') =>
 export const logUsage = (body) => request('/usage', { method: 'POST', body: JSON.stringify(body) });
 
 // Goals
-export const getGoals = () => request('/goals');
+export const getGoals = (userId) => request(`/goals?userId=${userId}`);
 export const createGoal = (body) => request('/goals', { method: 'POST', body: JSON.stringify(body) });
 
 // Alerts
-export const getAlerts = () => request('/alerts');
+export const getAlerts = (userId) => request(`/alerts?userId=${userId}`);
 
 // Reports
-export const getWeeklyReport = () => request('/reports/weekly');
-export const getMonthlyReport = () => request('/reports/monthly');
+export const getReport = (period, userId) => request(`/reports/${period}?userId=${userId}`);
