@@ -1,10 +1,10 @@
 package com.csen_359.design_patterns.config;
 
 import com.csen_359.design_patterns.repository.UsageEntryRepository;
-import com.csen_359.design_patterns.validation.CategoryValidationHandler;
-import com.csen_359.design_patterns.validation.DuplicateCheckHandler;
-import com.csen_359.design_patterns.validation.RangeValidationHandler;
-import com.csen_359.design_patterns.validation.UsageEntryHandler;
+import com.csen_359.design_patterns.service.validation.CategoryValidationHandler;
+import com.csen_359.design_patterns.service.validation.DuplicateCheckHandler;
+import com.csen_359.design_patterns.service.validation.RangeValidationHandler;
+import com.csen_359.design_patterns.service.validation.UsageEntryHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

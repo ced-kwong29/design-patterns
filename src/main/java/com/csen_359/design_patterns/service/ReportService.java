@@ -1,9 +1,9 @@
 package com.csen_359.design_patterns.service;
 
-import com.csen_359.design_patterns.report.MonthlyReportGenerator;
-import com.csen_359.design_patterns.report.Report;
-import com.csen_359.design_patterns.report.ReportGenerator;
-import com.csen_359.design_patterns.report.WeeklyReportGenerator;
+import com.csen_359.design_patterns.service.report.MonthlyReportGenerator;
+import com.csen_359.design_patterns.service.report.Report;
+import com.csen_359.design_patterns.service.report.ReportGenerator;
+import com.csen_359.design_patterns.service.report.WeeklyReportGenerator;
 import org.springframework.stereotype.Service;
 
 /**

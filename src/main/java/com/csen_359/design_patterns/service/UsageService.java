@@ -1,10 +1,10 @@
 package com.csen_359.design_patterns.service;
 
-import com.csen_359.design_patterns.builder.UsageEntryBuilder;
-import com.csen_359.design_patterns.calculation.BaseUsageCalculator;
-import com.csen_359.design_patterns.calculation.RegionalBenchmarkDecorator;
-import com.csen_359.design_patterns.calculation.SeasonalAdjustmentDecorator;
-import com.csen_359.design_patterns.calculation.UsageCalculator;
+import com.csen_359.design_patterns.service.builder.UsageEntryBuilder;
+import com.csen_359.design_patterns.service.calculation.BaseUsageCalculator;
+import com.csen_359.design_patterns.service.calculation.RegionalBenchmarkDecorator;
+import com.csen_359.design_patterns.service.calculation.SeasonalAdjustmentDecorator;
+import com.csen_359.design_patterns.service.calculation.UsageCalculator;
 import com.csen_359.design_patterns.domain.RegionalBenchmark;
 import com.csen_359.design_patterns.domain.Season;
 import com.csen_359.design_patterns.domain.UsageCategory;
@@ -15,7 +15,7 @@ import com.csen_359.design_patterns.dto.UsageSummaryResponse;
 import com.csen_359.design_patterns.event.UsageLoggedEvent;
 import com.csen_359.design_patterns.repository.RegionalBenchmarkRepository;
 import com.csen_359.design_patterns.repository.UsageEntryRepository;
-import com.csen_359.design_patterns.validation.UsageEntryHandler;
+import com.csen_359.design_patterns.service.validation.UsageEntryHandler;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.io.Writer;
