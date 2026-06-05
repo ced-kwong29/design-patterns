@@ -65,6 +65,12 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-redis</artifactId>
 		</dependency>
+		<!-- Boot 4 modular auto-config: carries CacheAutoConfiguration, which
+		     supplies the CacheManager bean that @EnableCaching requires. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-cache</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
@@ -75,6 +81,13 @@
 			<version>3.0.2</version>
 		</dependency>
 
+		<!-- Spring Boot 4 splits auto-configuration into per-technology modules;
+		     this one carries FlywayAutoConfiguration. Without it flyway-core is
+		     on the classpath but Flyway never runs at startup. -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-flyway</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-core</artifactId>
