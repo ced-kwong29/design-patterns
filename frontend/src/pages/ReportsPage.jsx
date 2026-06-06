@@ -25,9 +25,21 @@ export default function ReportsPage() {
       </div>
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {report && (
-        <pre style={{ background: '#f4f4f4', padding: 12 }}>
-          {JSON.stringify(report, null, 2)}
-        </pre>
+        <div style={{ padding: 16, background: "#f9f9f9", borderRadius: 8 }}>
+          
+          <h3>{report.type} Report</h3>
+
+          <p><b>From:</b> {report.from}</p>
+          <p><b>To:</b> {report.to}</p>
+
+          <p><b>Total Litres:</b> {report.totalLitres}</p>
+          <p><b>Anomalies:</b> {report.anomalyCount}</p>
+
+          <hr />
+
+          <p><b>Summary:</b></p>
+          <p>{report.summary}</p>
+        </div>
       )}
     </div>
   );
