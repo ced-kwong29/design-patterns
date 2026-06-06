@@ -6,6 +6,10 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': 'http://localhost:8080', // to ced and alex --> change this as needed to wherever the proxy is
+      '/ws': {
+        target: 'http://localhost:8080',
+        ws: true,
+      },
     },
   },
 });

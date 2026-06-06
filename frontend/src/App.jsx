@@ -1,13 +1,14 @@
 import { useState } from 'react';
+import DashboardPage from './pages/DashboardPage';
 import UsagePage from './pages/UsagePage';
 import GoalsPage from './pages/GoalsPage';
 import AlertsPage from './pages/AlertsPage';
 import ReportsPage from './pages/ReportsPage';
 
-const PAGES = ['Usage', 'Goals', 'Alerts', 'Reports'];
+const PAGES = ['Dashboard', 'Usage', 'Goals', 'Alerts', 'Reports'];
 
 export default function App() {
-  const [page, setPage] = useState('Usage');
+  const [page, setPage] = useState('Dashboard');
 
   return (
     <div style={{ fontFamily: 'sans-serif', maxWidth: 900, margin: '0 auto', padding: 24 }}>
@@ -23,10 +24,11 @@ export default function App() {
           </button>
         ))}
       </nav>
-      {page === 'Usage'   && <UsagePage />}
-      {page === 'Goals'   && <GoalsPage />}
-      {page === 'Alerts'  && <AlertsPage />}
-      {page === 'Reports' && <ReportsPage />}
+      {page === 'Dashboard' && <DashboardPage />}
+      {page === 'Usage'     && <UsagePage />}
+      {page === 'Goals'     && <GoalsPage />}
+      {page === 'Alerts'    && <AlertsPage />}
+      {page === 'Reports'   && <ReportsPage />}
     </div>
   );
 }

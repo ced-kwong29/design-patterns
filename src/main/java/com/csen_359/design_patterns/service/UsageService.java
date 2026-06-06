@@ -5,6 +5,12 @@ import com.csen_359.design_patterns.service.calculation.BaseUsageCalculator;
 import com.csen_359.design_patterns.service.calculation.RegionalBenchmarkDecorator;
 import com.csen_359.design_patterns.service.calculation.SeasonalAdjustmentDecorator;
 import com.csen_359.design_patterns.service.calculation.UsageCalculator;
+import com.csen_359.design_patterns.service.composite.IndividualUsage;
+import com.csen_359.design_patterns.service.composite.UsageGroup;
+import com.csen_359.design_patterns.service.composite.UsageNode;
+import com.csen_359.design_patterns.service.visitor.CategoryBreakdownVisitor;
+import com.csen_359.design_patterns.service.visitor.TotalVolumeVisitor;
+import com.csen_359.design_patterns.service.visitor.UsageStatisticsApplier;
 import com.csen_359.design_patterns.domain.RegionalBenchmark;
 import com.csen_359.design_patterns.domain.Season;
 import com.csen_359.design_patterns.domain.UsageCategory;
@@ -115,10 +121,32 @@ public class UsageService {
                                           String period) {
         List<UsageEntry> entries =
                 usageEntryRepository.findByUserIdAndLoggedAtBetween(userId, from, to);
-        double total = entries.stream().mapToDouble(UsageEntry::getLitres).sum();
-        Map<UsageCategory, Double> byCategory = entries.stream().collect(Collectors.groupingBy(
-                UsageEntry::getCategory, Collectors.summingDouble(UsageEntry::getLitres)));
-        return new UsageSummaryResponse(period, entries.size(), total, byCategory);
+
+        // Visitor pattern - compute total and per-category breakdown via visitors.
+        TotalVolumeVisitor totalVisitor = new TotalVolumeVisitor();
+        CategoryBreakdownVisitor categoryVisitor = new CategoryBreakdownVisitor();
+        UsageStatisticsApplier.apply(entries, totalVisitor);
+        UsageStatisticsApplier.apply(entries, categoryVisitor);
+
+        // Composite pattern - build a tree grouping entries by category so
+        // totalLitres() recurses uniformly over any depth.
+        UsageGroup root = new UsageGroup("All Usage");
+        Map<UsageCategory, List<UsageEntry>> grouped = entries.stream()
+                .collect(Collectors.groupingBy(UsageEntry::getCategory));
+        for (Map.Entry<UsageCategory, List<UsageEntry>> e : grouped.entrySet()) {
+            UsageGroup categoryGroup = new UsageGroup(e.getKey().name());
+            for (UsageEntry entry : e.getValue()) {
+                categoryGroup.add(new IndividualUsage(entry));
+            }
+            root.add(categoryGroup);
+        }
+
+        // Use the composite root's totalLitres() to verify consistency (logged for debugging).
+        double compositeTotal = root.totalLitres();
+        assert Math.abs(compositeTotal - totalVisitor.getTotalLitres()) < 0.001;
+
+        return new UsageSummaryResponse(period, entries.size(),
+                totalVisitor.getTotalLitres(), categoryVisitor.getTotals());
     }
 
     @Transactional(readOnly = true)

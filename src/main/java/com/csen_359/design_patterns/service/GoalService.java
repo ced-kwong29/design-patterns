@@ -1,6 +1,8 @@
 package com.csen_359.design_patterns.service;
 
 import com.csen_359.design_patterns.service.builder.GoalBuilder;
+import com.csen_359.design_patterns.service.mediator.AlertCoordinator;
+import com.csen_359.design_patterns.service.singleton.ConservationThresholds;
 import com.csen_359.design_patterns.domain.Goal;
 import com.csen_359.design_patterns.domain.GoalState;
 import com.csen_359.design_patterns.domain.UsageEntry;
@@ -33,13 +35,16 @@ public class GoalService {
     private final GoalRepository goalRepository;
     private final UsageEntryRepository usageEntryRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final AlertCoordinator alertCoordinator;
 
     public GoalService(GoalRepository goalRepository,
                        UsageEntryRepository usageEntryRepository,
-                       ApplicationEventPublisher eventPublisher) {
+                       ApplicationEventPublisher eventPublisher,
+                       AlertCoordinator alertCoordinator) {
         this.goalRepository = goalRepository;
         this.usageEntryRepository = usageEntryRepository;
         this.eventPublisher = eventPublisher;
+        this.alertCoordinator = alertCoordinator;
     }
 
     @Transactional
@@ -107,7 +112,8 @@ public class GoalService {
 
     /**
      * Recomputes a single goal's state and emits a {@link GoalStatusChangedEvent}
-     * if it transitioned.
+     * if it transitioned. Also notifies the Mediator ({@link AlertCoordinator})
+     * when a goal moves to AT_RISK or MISSED so it can create user-visible alerts.
      */
     @Transactional
     public void recalculateState(Goal goal) {
@@ -118,18 +124,28 @@ public class GoalService {
             goalRepository.save(goal);
             eventPublisher.publishEvent(new GoalStatusChangedEvent(
                     goal.getId(), goal.getUserId(), previous, next));
+
+            // Mediator pattern - notify the coordinator of significant transitions.
+            if (next == GoalState.AT_RISK) {
+                alertCoordinator.onGoalAtRisk(goal.getUserId(), goal.getId(),
+                        progressPercent(goal) / 100.0);
+            } else if (next == GoalState.MISSED) {
+                alertCoordinator.onGoalMissed(goal.getUserId(), goal.getId());
+            }
         }
     }
 
     /**
-     * The State-pattern transition function. See {@link GoalState} for the
-     * full transition table.
+     * The State-pattern transition function. Uses {@link ConservationThresholds}
+     * (Singleton) for the risk threshold percentage. See {@link GoalState} for
+     * the full transition table.
      */
     GoalState nextState(Goal goal) {
         if (goal.getState().isTerminal()) {
             return goal.getState();
         }
 
+        ConservationThresholds thresholds = ConservationThresholds.getInstance();
         double progress = progressPercent(goal);
         long daysLeft = ChronoUnit.DAYS.between(LocalDate.now(), goal.getEndsAt());
 
@@ -141,8 +157,8 @@ public class GoalService {
         if (daysLeft < 0) {
             return GoalState.ACHIEVED;
         }
-        // Nearing the budget with little time to spare.
-        if (progress >= 80.0 && daysLeft <= 7) {
+        // Nearing the budget with little time to spare (Singleton threshold).
+        if (progress >= thresholds.getGoalRiskThresholdPct() * 100.0 && daysLeft <= 7) {
             return GoalState.AT_RISK;
         }
         // Comfortable margin remaining.
