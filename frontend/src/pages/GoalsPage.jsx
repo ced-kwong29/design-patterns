@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { getGoals, createGoal } from '../api';
+import useWebSocket from '../useWebSocket';
 import { USER_ID } from '../constants';
 
 const CATEGORIES = ['SHOWER', 'BATH', 'LAUNDRY', 'DISHWASHER', 'GARDEN', 'DRINKING', 'OTHER'];
@@ -17,9 +18,14 @@ export default function GoalsPage() {
 
   const updateForm = (field) => (e) => setForm({ ...form, [field]: e.target.value });
 
-  useEffect(() => {
+  const load = useCallback(() => {
     getGoals(USER_ID).then(setGoals).catch((err) => setError(err.message));
   }, []);
+
+  useEffect(load, [load]);
+
+  // WebSocket: auto-reload when a goal state changes
+  useWebSocket({ onGoal: load });
 
   function computeEndDate(period) {
     const start = new Date();

@@ -24,6 +24,7 @@ graph TD
         GC[GoalController]
         AC[AlertController]
         RC[ReportController]
+        DC[DashboardController]
     end
 
     subgraph Service["Service Layer"]
@@ -32,6 +33,8 @@ graph TD
         AS[AnomalyService]
         RS[ReportService]
         WDF[WaterDashboardFacade]
+        UCI[UsageCommandInvoker]
+        DAC[DefaultAlertCoordinator]
     end
 
     subgraph Persistence["Persistence Layer"]
@@ -51,9 +54,12 @@ Each controller interacts with specific services and repositories. The diagrams 
 
 ```mermaid
 graph LR
-    UC[UsageController] --> US[UsageService]
+    UC[UsageController] --> UCI[UsageCommandInvoker]
+    UCI --> US[UsageService]
+    UC --> UPI[UsagePageIterator]
     US --> UER[UsageEntryRepository]
     US --> RBR[RegionalBenchmarkRepository]
+    UPI --> UER
 ```
 
 **GoalController**
@@ -63,6 +69,8 @@ graph LR
     GC[GoalController] --> GS[GoalService]
     GS --> GR[GoalRepository]
     GS --> UER[UsageEntryRepository]
+    GS --> DAC[AlertCoordinator]
+    GS --> CT[ConservationThresholds]
 ```
 
 **AlertController**
@@ -77,7 +85,16 @@ graph LR
 ```mermaid
 graph LR
     RC[ReportController] --> RS[ReportService]
-    RS --> UER[UsageEntryRepository]
+    RS --> CRP[CachedReportGeneratorProxy]
+    CRP --> RG[ReportGenerator]
+    RG --> UER[UsageEntryRepository]
+```
+
+**DashboardController**
+
+```mermaid
+graph LR
+    DC[DashboardController] --> WDF[WaterDashboardFacade]
 ```
 
 **WaterDashboardFacade** (aggregates all subsystems)
@@ -94,10 +111,11 @@ graph LR
 
 | Controller | Interacts With | Methods Called |
 |-----------|---------------|---------------|
-| `UsageController` | `UsageService` | `logUsage`, `getUsage`, `summarise`, `benchmark`, `exportCsv` |
+| `UsageController` | `UsageCommandInvoker`, `UsageService`, `UsagePageIterator` | `execute`, `undo`, `logUsage`, `getUsage`, `summarise`, `benchmark`, `exportCsv` |
 | `GoalController` | `GoalService` | `createGoal`, `listGoals`, `progressPercent` |
 | `AlertController` | `AlertRepository` (direct) | `findByUserIdAndAcknowledgedAtIsNull`, `findById` |
 | `ReportController` | `ReportService` | `generateReport` |
+| `DashboardController` | `WaterDashboardFacade` | `getDashboard` |
 | `WaterDashboardFacade` | `UsageService`, `ReportService`, `GoalRepository`, `AlertRepository` | `summarise`, `generateReport`, `findByUserIdAndState`, `findTop10...` |
 
 #### Observer Event Flow (async, after commit)
@@ -358,6 +376,8 @@ classDiagram
 
 Adding a new channel (push, Slack) requires only a new `NotificationChannel` implementation. Adding a new notification type requires only a new `Notification` subclass. Neither side forces changes on the other.
 
+**Wired via:** `WeeklyDigestJob` injects `NotificationChannel` (defaulting to `EmailChannel` via `@Primary`) and constructs a `DigestNotification` per user to deliver the weekly report summary.
+
 ---
 
 ### 4. Builder Pattern (`builder/`)
@@ -497,6 +517,8 @@ classDiagram
 - `execute()` logs the usage entry via `UsageService`
 - `undo()` deletes the entry by primary key
 
+**Wired via:** `UsageController` injects `UsageCommandInvoker`. `POST /api/usage` wraps each log operation in a `LogUsageCommand` and pushes it onto the invoker's history. `DELETE /api/usage/undo` pops and reverses the last command.
+
 ---
 
 ### 7. Chain of Responsibility (`validation/`)
@@ -588,6 +610,8 @@ classDiagram
 
 Example: "Indoor" group contains Shower, Bath, Laundry leaves; "All Household" group contains "Indoor" and "Outdoor" sub-groups. `totalLitres()` recurses to any depth.
 
+**Wired via:** `UsageService.summarise()` builds a `UsageGroup` tree from entries grouped by category. Each category becomes a `UsageGroup` containing `IndividualUsage` leaves. The composite's `totalLitres()` is used for verification alongside the Visitor-computed total.
+
 ---
 
 ### 9. Singleton Pattern (`singleton/`)
@@ -612,6 +636,8 @@ classDiagram
 ```
 
 Thread-safe via `volatile` + synchronized double-checked lock. All values are read-only after construction.
+
+**Wired via:** `GoalService.nextState()` reads `getGoalRiskThresholdPct()` to determine the AT_RISK transition point. `AnomalyService.detectAndSave()` reads `getSpikeMultiplier()` and `getSustainedElevationDays()` when routing alerts through the Mediator.
 
 ---
 
@@ -674,8 +700,8 @@ stateDiagram-v2
 
 | From | To | Condition |
 |------|----|-----------|
-| ACTIVE | ON_TRACK | usage < 80% of target AND > 7 days remaining |
-| ACTIVE / ON_TRACK | AT_RISK | usage ≥ 80% of target AND ≤ 7 days remaining |
+| ACTIVE | ON_TRACK | usage < 85% of target (Singleton threshold) AND > 7 days remaining |
+| ACTIVE / ON_TRACK | AT_RISK | usage ≥ 85% of target (Singleton: `goalRiskThresholdPct`) AND ≤ 7 days remaining |
 | ACTIVE / ON_TRACK / AT_RISK | MISSED | usage > 100% of target (budget exceeded) |
 | ACTIVE / ON_TRACK / AT_RISK | ACHIEVED | period ends with usage ≤ target |
 
@@ -757,7 +783,7 @@ Hides four subsystem interactions behind a single `getDashboard()` call.
 
 ```mermaid
 graph LR
-    Client[Controller / Frontend] -->|getDashboard| WDF[WaterDashboardFacade]
+    Client[DashboardController / Frontend] -->|getDashboard| WDF[WaterDashboardFacade]
 
     subgraph Subsystems["Coordinated by Facade"]
         US[UsageService.summarise]
@@ -785,6 +811,8 @@ graph LR
 | `latestReport` | `ReportService.generateReport()` |
 
 The frontend makes a single HTTP call instead of four — the facade orchestrates all subsystems internally.
+
+**Wired via:** `DashboardController` (`GET /api/dashboard?userId=...`) injects `WaterDashboardFacade` and delegates to `getDashboard()`. The React frontend's Dashboard page calls this single endpoint.
 
 ---
 
@@ -817,6 +845,8 @@ classDiagram
 ```
 
 Also used: `UsageEntryRepository.streamByUserId...()` for CSV export — a JPA streaming cursor consumed inside a transaction without materializing the full result set.
+
+**Wired via:** `UsageController` exposes `GET /api/usage/page` which instantiates a `UsagePageIterator` and advances it to the requested page number, returning one page at a time.
 
 ---
 
@@ -862,6 +892,8 @@ Each method in `DefaultAlertCoordinator` follows the same pattern:
 
 Subsystems call methods on `AlertCoordinator` and have no reference to the alert repository, the builder, or to one another.
 
+**Wired via:** `GoalService` injects `AlertCoordinator` and calls `onGoalAtRisk()` / `onGoalMissed()` when the FSM transitions. `AnomalyService` injects `AlertCoordinator` and calls `onUsageSpike()` / `onSustainedElevation()` when anomalies are detected.
+
 ---
 
 ### 17. Proxy Pattern (`proxy/`)
@@ -896,6 +928,8 @@ classDiagram
 
 - Returns cached result for 30 minutes after the first call
 - `invalidate()` forces a fresh computation on the next request
+
+**Wired via:** `ReportService` wraps each `ReportGenerator` (weekly, monthly) in a `CachedReportGeneratorProxy` at construction time. The proxy is transparent to `ReportController` and `WaterDashboardFacade` — they still call `generateReport()` and get cached results within the TTL window.
 
 ---
 
@@ -933,6 +967,8 @@ classDiagram
 
 New computations (carbon footprint, cost estimation, per-fixture benchmarking) are added by writing a new `UsageVisitor` implementation — no changes to the entity or service layer.
 
+**Wired via:** `UsageService.summarise()` applies `TotalVolumeVisitor` and `CategoryBreakdownVisitor` via `UsageStatisticsApplier` to compute the total litres and per-category breakdown returned by `GET /api/usage/summary`.
+
 ---
 
 ## Core Data Flows
@@ -943,6 +979,8 @@ New computations (carbon footprint, cost estimation, per-fixture benchmarking) a
 sequenceDiagram
     participant Client
     participant UsageController
+    participant Invoker as UsageCommandInvoker
+    participant Command as LogUsageCommand
     participant UsageService
     participant Builder as UsageEntryBuilder
     participant Chain as Validation Chain
@@ -951,7 +989,9 @@ sequenceDiagram
     participant Publisher as EventPublisher
 
     Client->>UsageController: POST /api/usage
-    UsageController->>UsageService: logUsage(request)
+    UsageController->>Invoker: execute(LogUsageCommand)
+    Invoker->>Command: execute()
+    Command->>UsageService: logUsage(request)
 
     UsageService->>Builder: builder().userId().category().litres()...build()
     Builder-->>UsageService: UsageEntry
@@ -972,7 +1012,9 @@ sequenceDiagram
     Publisher-->>GPL: GoalProgressListener
     Publisher-->>WSPL: WebSocketPushListener
 
-    UsageService-->>UsageController: UsageEntry
+    UsageService-->>Command: savedEntry
+    Command-->>Invoker: (pushed to history)
+    Invoker-->>UsageController: done
     UsageController-->>Client: 201 Created + UsageEntryResponse
 ```
 
@@ -983,11 +1025,13 @@ sequenceDiagram
     participant Event as UsageLoggedEvent
     participant ADL as AnomalyDetectionListener
     participant AS as AnomalyService
+    participant CT as ConservationThresholds
     participant Repo as UsageEntryRepository
     participant CD as CompositeDetector
     participant SD as SpikeDetector
     participant SED as SustainedElevationDetector
     participant AR as AlertRepository
+    participant DAC as AlertCoordinator
     participant Pub as EventPublisher
 
     Event->>ADL: onUsageLogged (async, after commit)
@@ -1001,6 +1045,8 @@ sequenceDiagram
     SED-->>CD: alerts (if any)
     CD-->>AS: merged alerts
     AS->>AR: saveAll(alerts)
+    AS->>CT: getInstance() [Singleton]
+    AS->>DAC: onUsageSpike / onSustainedElevation [Mediator]
     AS->>Pub: publish(AnomalyDetectedEvent) per alert
     Pub-->>WSPL: → /topic/alerts
 ```
@@ -1012,8 +1058,10 @@ sequenceDiagram
     participant Event as UsageLoggedEvent
     participant GPL as GoalProgressListener
     participant GS as GoalService
+    participant CT as ConservationThresholds
     participant GR as GoalRepository
     participant UER as UsageEntryRepository
+    participant DAC as AlertCoordinator
     participant Pub as EventPublisher
 
     Event->>GPL: onUsageLogged (async, after commit)
@@ -1025,11 +1073,15 @@ sequenceDiagram
         GS->>UER: query entries in goal window
         UER-->>GS: entries
         GS->>GS: progressPercent(goal)
+        GS->>CT: getInstance().getGoalRiskThresholdPct() [Singleton]
         GS->>GS: nextState(goal) [FSM transition]
         alt state changed
             GS->>GR: save(goal)
             GS->>Pub: publish(GoalStatusChangedEvent)
             Pub-->>WSPL: → /topic/goals
+            alt AT_RISK or MISSED
+                GS->>DAC: onGoalAtRisk / onGoalMissed [Mediator]
+            end
         end
     end
 ```
@@ -1041,20 +1093,21 @@ sequenceDiagram
 ### `controller/`
 | Class | Purpose |
 |-------|---------|
-| `UsageController` | CRUD for usage entries + summary, benchmark, CSV export |
+| `UsageController` | CRUD for usage entries + summary, benchmark, CSV export, undo (Command), pagination (Iterator) |
 | `GoalController` | Create and list conservation goals |
 | `AlertController` | List and acknowledge alerts |
 | `ReportController` | Generate weekly/monthly reports |
+| `DashboardController` | Aggregated dashboard view via Facade |
 | `WebSocketController` | STOMP ping/pong endpoint |
 | `ApiExceptionHandler` | Maps exceptions → JSON error responses (400, 404, 501) |
 
 ### `service/`
 | Class | Purpose |
 |-------|---------|
-| `UsageService` | Core write path: Builder → Chain → Decorator → Observer |
-| `GoalService` | Goal CRUD + State-pattern FSM transitions |
-| `AnomalyService` | Delegates to CompositeDetector, persists alerts, publishes events |
-| `ReportService` | Factory Method: resolves period → ReportGenerator |
+| `UsageService` | Core write path: Builder → Chain → Decorator → Observer → Visitor → Composite |
+| `GoalService` | Goal CRUD + State-pattern FSM transitions + Mediator (AlertCoordinator) + Singleton (ConservationThresholds) |
+| `AnomalyService` | Delegates to CompositeDetector, persists alerts, publishes events, notifies Mediator, reads Singleton thresholds |
+| `ReportService` | Factory Method: resolves period → CachedReportGeneratorProxy (Proxy) → ReportGenerator |
 
 ### `domain/`
 | Class | Purpose |
@@ -1083,7 +1136,7 @@ sequenceDiagram
 | `AnomalyDetectionJob` | Nightly (02:00) | Sweeps all users/categories for anomalies |
 | `GoalStatusRecalcJob` | Every 6 hours | Recomputes FSM state for active goals |
 | `DataCleanupJob` | Monthly (1st, 03:00) | Archives entries older than 2 years |
-| `WeeklyDigestJob` | Sunday (08:00) | Generates and delivers weekly report digests |
+| `WeeklyDigestJob` | Sunday (08:00) | Generates weekly reports and delivers digests via Bridge (DigestNotification → NotificationChannel) |
 
 ### `dto/`
 | Class | Direction | Purpose |
@@ -1106,10 +1159,14 @@ sequenceDiagram
 
 ## Technology Stack
 
-- **Framework:** Spring Boot 3.x
-- **Persistence:** Spring Data JPA / Hibernate
+- **Framework:** Spring Boot 4.0.x
+- **Language:** Java 17
+- **Persistence:** Spring Data JPA / Hibernate + PostgreSQL + Flyway migrations
+- **Caching:** Spring Cache + Redis
 - **Real-time:** STOMP over WebSocket with SockJS fallback
 - **Scheduling:** Spring `@Scheduled` with configurable cron expressions
 - **Async:** Spring `@Async` + `@TransactionalEventListener`
 - **Validation:** Bean Validation (Jakarta) + custom Chain of Responsibility
+- **API Docs:** SpringDoc OpenAPI (Swagger UI)
 - **Build:** Maven
+- **Frontend:** React 19 + Vite (connects via REST + STOMP WebSocket)

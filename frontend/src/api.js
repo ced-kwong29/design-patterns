@@ -6,7 +6,9 @@ async function request(path, options = {}) {
     ...options,
   });
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-  return res.json();
+  // Handle 204 No Content or empty bodies
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
 }
 
 // Usage
@@ -21,6 +23,15 @@ export const getBenchmark = (userId, category, region = 'DEFAULT') =>
   request(`/usage/benchmark?userId=${userId}&category=${category}&region=${region}`);
 export const logUsage = (body) => request('/usage', { method: 'POST', body: JSON.stringify(body) });
 
+/** Command pattern - undo the last usage log. */
+export const undoUsage = () => request('/usage/undo', { method: 'DELETE' });
+
+/** Iterator pattern - paginated usage history. */
+export const getUsagePage = (userId, from, to, pageNum = 0, pageSize = 20) => {
+  const params = new URLSearchParams({ userId, from, to, pageNum, pageSize });
+  return request(`/usage/page?${params}`);
+};
+
 // Goals
 export const getGoals = (userId) => request(`/goals?userId=${userId}`);
 export const createGoal = (body) => request('/goals', { method: 'POST', body: JSON.stringify(body) });
@@ -30,3 +41,6 @@ export const getAlerts = (userId) => request(`/alerts?userId=${userId}`);
 
 // Reports
 export const getReport = (period, userId) => request(`/reports/${period}?userId=${userId}`);
+
+// Dashboard (Facade pattern - single call for all dashboard data)
+export const getDashboard = (userId) => request(`/dashboard?userId=${userId}`);

@@ -1,6 +1,8 @@
 package com.csen_359.design_patterns.service;
 
 import com.csen_359.design_patterns.service.anomaly.CompositeDetector;
+import com.csen_359.design_patterns.service.mediator.AlertCoordinator;
+import com.csen_359.design_patterns.service.singleton.ConservationThresholds;
 import com.csen_359.design_patterns.domain.Alert;
 import com.csen_359.design_patterns.domain.UsageCategory;
 import com.csen_359.design_patterns.domain.UsageEntry;
@@ -32,20 +34,25 @@ public class AnomalyService {
     private final UsageEntryRepository usageEntryRepository;
     private final AlertRepository alertRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final AlertCoordinator alertCoordinator;
 
     public AnomalyService(CompositeDetector compositeDetector,
                           UsageEntryRepository usageEntryRepository,
                           AlertRepository alertRepository,
-                          ApplicationEventPublisher eventPublisher) {
+                          ApplicationEventPublisher eventPublisher,
+                          AlertCoordinator alertCoordinator) {
         this.compositeDetector = compositeDetector;
         this.usageEntryRepository = usageEntryRepository;
         this.alertRepository = alertRepository;
         this.eventPublisher = eventPublisher;
+        this.alertCoordinator = alertCoordinator;
     }
 
     /**
      * Runs every detector strategy over the recent window for one category and
-     * persists whatever alerts come back.
+     * persists whatever alerts come back. Uses {@link ConservationThresholds}
+     * (Singleton) for the critical-alert threshold and notifies the
+     * {@link AlertCoordinator} (Mediator) for spike alerts.
      */
     @Transactional
     public List<Alert> detectAndSave(Long userId, UsageCategory category) {
@@ -59,11 +66,22 @@ public class AnomalyService {
             return List.of();
         }
 
+        ConservationThresholds thresholds = ConservationThresholds.getInstance();
         List<Alert> saved = alertRepository.saveAll(alerts);
         for (Alert alert : saved) {
             eventPublisher.publishEvent(new AnomalyDetectedEvent(
                     alert.getId(), alert.getUserId(), alert.getType(),
                     alert.getCategory(), alert.getMessage()));
+
+            // Mediator pattern - route spike alerts through the coordinator.
+            if (alert.getType() == com.csen_359.design_patterns.domain.AlertType.SPIKE) {
+                alertCoordinator.onUsageSpike(userId, category,
+                        recent.get(recent.size() - 1).getLitres(),
+                        thresholds.getSpikeMultiplier());
+            } else if (alert.getType() == com.csen_359.design_patterns.domain.AlertType.SUSTAINED_ELEVATION) {
+                alertCoordinator.onSustainedElevation(userId, category,
+                        thresholds.getSustainedElevationDays());
+            }
         }
         log.info("Persisted {} alert(s) for user {} / {}", saved.size(), userId, category);
         return saved;

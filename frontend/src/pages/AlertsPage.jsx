@@ -1,14 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { getAlerts } from '../api';
+import useWebSocket from '../useWebSocket';
 import { USER_ID } from '../constants';
 
 export default function AlertsPage() {
   const [alerts, setAlerts] = useState([]);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     getAlerts(USER_ID).then(setAlerts).catch((err) => setError(err.message));
   }, []);
+
+  useEffect(load, [load]);
+
+  // WebSocket: auto-reload when a new alert arrives
+  useWebSocket({ onAlert: load });
 
   if (error) return <p style={{ color: 'red' }}>{error}</p>;
 

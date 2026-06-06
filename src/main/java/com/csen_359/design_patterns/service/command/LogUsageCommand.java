@@ -42,6 +42,11 @@ public class LogUsageCommand implements UsageCommand {
         }
     }
 
+    /** Returns the persisted entry after {@code execute()} has been called. */
+    public UsageEntry getResult() {
+        return savedEntry;
+    }
+
     @Override
     public String description() {
         return "Log " + request.litres() + " L of " + request.category()

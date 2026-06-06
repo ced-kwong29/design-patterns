@@ -1,9 +1,14 @@
 package com.csen_359.design_patterns.service.scheduler;
 
+import com.csen_359.design_patterns.service.bridge.DigestNotification;
+import com.csen_359.design_patterns.service.bridge.NotificationChannel;
 import com.csen_359.design_patterns.service.report.Report;
+import com.csen_359.design_patterns.domain.UsageCategory;
 import com.csen_359.design_patterns.repository.UsageEntryRepository;
 import com.csen_359.design_patterns.service.ReportService;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -11,7 +16,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Sunday-morning job (08:00) - runs the weekly report pipeline and delivers
- * the digest. Cron is configurable via
+ * the digest via the Bridge notification stack. Cron is configurable via
  * {@code watermonitor.scheduler.weekly-digest-cron}.
  */
 @Component
@@ -21,11 +26,14 @@ public class WeeklyDigestJob {
 
     private final ReportService reportService;
     private final UsageEntryRepository usageEntryRepository;
+    private final NotificationChannel notificationChannel;
 
     public WeeklyDigestJob(ReportService reportService,
-                           UsageEntryRepository usageEntryRepository) {
+                           UsageEntryRepository usageEntryRepository,
+                           NotificationChannel notificationChannel) {
         this.reportService = reportService;
         this.usageEntryRepository = usageEntryRepository;
+        this.notificationChannel = notificationChannel;
     }
 
     @Scheduled(cron = "${watermonitor.scheduler.weekly-digest-cron}")
@@ -34,8 +42,21 @@ public class WeeklyDigestJob {
         List<Long> userIds = usageEntryRepository.findDistinctUserIds();
         for (Long userId : userIds) {
             Report report = reportService.generateReport(userId, "weekly");
-            // Delivery (email/SMS) is handled by the Bridge notification stack;
-            // here we log the rendered digest so the pipeline is observable.
+
+            // Bridge pattern - compose digest items and dispatch via the channel.
+            List<String> items = new ArrayList<>();
+            items.add(String.format("Total usage: %.1f L", report.totalLitres()));
+            for (Map.Entry<UsageCategory, Double> e : report.litresByCategory().entrySet()) {
+                items.add(String.format("%s: %.1f L", e.getKey(), e.getValue()));
+            }
+            if (report.anomalyCount() > 0) {
+                items.add(String.format("Anomalies detected: %d", report.anomalyCount()));
+            }
+
+            DigestNotification digest = new DigestNotification(
+                    notificationChannel, "Weekly", items);
+            digest.dispatch(userId);
+
             log.info("Weekly digest for user {}: {}", userId, report.summary());
         }
         log.info("WeeklyDigestJob delivered {} digest(s)", userIds.size());
