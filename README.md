@@ -499,6 +499,7 @@ classDiagram
         -savedEntry: UsageEntry
         +execute()
         +undo()
+        +getResult() UsageEntry
         +description() String
     }
 
@@ -921,9 +922,17 @@ classDiagram
         -isExpired() boolean
     }
 
+    class ReportService {
+        -weeklyProxy: CachedReportGeneratorProxy
+        -monthlyProxy: CachedReportGeneratorProxy
+        +generateReport(Long userId, String period) Report
+        +invalidateCache(String period)
+    }
+
     ReportProvider <|.. ReportGenerator
     ReportProvider <|.. CachedReportGeneratorProxy
     CachedReportGeneratorProxy o-- ReportProvider : delegates to
+    ReportService o-- CachedReportGeneratorProxy : wraps generators
 ```
 
 - Returns cached result for 30 minutes after the first call
