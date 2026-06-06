@@ -1,7 +1,7 @@
 // GardenFaucet.jsx
-export default function GardenFaucet({ isOn }) {
+export default function GardenFaucet({ isOn, handleToggle }) {
   return (
-    <svg viewBox="0 0 220 340" width={220} height={340}>
+    <svg viewBox="0 0 220 340" width={220} height={340} onClick={handleToggle}>
 
       {/* exterior wall */}
       <rect x="40" y="70" width="140" height="160" rx="12" fill="#c8e6c9" />

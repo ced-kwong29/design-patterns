@@ -1,7 +1,7 @@
 // DrinkingFaucet.jsx
-export default function DrinkingFaucet({ isOn }) {
+export default function DrinkingFaucet({ isOn, handleToggle }) {
   return (
-    <svg viewBox="0 0 220 340" width={220} height={340}>
+    <svg viewBox="0 0 220 340" width={220} height={340} onClick={handleToggle}>
 
       {/* sleek counter */}
       <rect x="50" y="180" width="120" height="40" rx="8" fill="#eceff1" />

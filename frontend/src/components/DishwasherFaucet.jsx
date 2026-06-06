@@ -1,7 +1,7 @@
 // DishwasherFaucet.jsx
-export default function DishwasherFaucet({ isOn }) {
+export default function DishwasherFaucet({ isOn, handleToggle }) {
   return (
-    <svg viewBox="0 0 220 340" width={220} height={340}>
+    <svg viewBox="0 0 220 340" width={220} height={340} onClick={handleToggle}>
       
       {/* under-sink wall */}
       <rect x="60" y="80" width="100" height="120" rx="10" fill="#eceff1" />

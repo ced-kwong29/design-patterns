@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { logUsage } from '../api';
 import OtherFaucet from './OtherFaucet';
-import { ShowerFaucet } from './ShowerFaucet';
-import { BathFaucet } from './BathFaucet';
-import { LaundryFaucet } from './LaundryFaucet';
+import ShowerFaucet from './ShowerFaucet';
+import BathFaucet from './BathFaucet';
+import LaundryFaucet from './LaundryFaucet';
 import DishwasherFaucet from './DishwasherFaucet';
 import GardenFaucet from './GardenFaucet';
 import DrinkingFaucet from './DrinkingFaucet';
