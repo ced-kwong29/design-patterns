@@ -1,8 +1,6 @@
 package com.csen_359.design_patterns.config;
 
-import com.csen_359.design_patterns.repository.UsageEntryRepository;
 import com.csen_359.design_patterns.service.validation.CategoryValidationHandler;
-import com.csen_359.design_patterns.service.validation.DuplicateCheckHandler;
 import com.csen_359.design_patterns.service.validation.RangeValidationHandler;
 import com.csen_359.design_patterns.service.validation.UsageEntryHandler;
 import org.springframework.context.annotation.Bean;
@@ -15,7 +13,7 @@ import org.springframework.context.annotation.Configuration;
  * editing this single method, with no change to handler code:
  *
  * <pre>
- *   RangeValidationHandler -&gt; CategoryValidationHandler -&gt; DuplicateCheckHandler
+ *   RangeValidationHandler -&gt; CategoryValidationHandler
  * </pre>
  *
  * The head of the chain is exposed as a {@link UsageEntryHandler} bean that
@@ -25,12 +23,11 @@ import org.springframework.context.annotation.Configuration;
 public class ValidationChainConfig {
 
     @Bean
-    public UsageEntryHandler usageValidationChain(UsageEntryRepository usageEntryRepository) {
+    public UsageEntryHandler usageValidationChain() {
         UsageEntryHandler range = new RangeValidationHandler();
         UsageEntryHandler category = new CategoryValidationHandler();
-        UsageEntryHandler duplicate = new DuplicateCheckHandler(usageEntryRepository);
 
-        range.linkTo(category).linkTo(duplicate);
+        range.linkTo(category);
         return range;
     }
 }
