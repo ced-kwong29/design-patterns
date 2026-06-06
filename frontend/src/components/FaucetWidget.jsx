@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { logUsage } from '../api';
+import { USER_ID } from "../constants";
 
 const CATEGORIES = ['SHOWER', 'BATH', 'LAUNDRY', 'DISHWASHER', 'GARDEN', 'DRINKING', 'OTHER'];
 const FLOW_RATES = { slow: 4, medium: 8, fast: 16 }; // litres per minute
-
-const USER_ID = 1;
 
 export default function FaucetWidget({ onLogged }) {
   const [isOn, setIsOn]           = useState(false);
