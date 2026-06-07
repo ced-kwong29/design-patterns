@@ -7,8 +7,8 @@ package com.csen_359.design_patterns.domain;
  * {@code GoalService} so the FSM stays explicit and independently testable:
  *
  * <pre>
- *   ACTIVE --(usage &lt; 80% of target, &gt;7 days left)--&gt; ON_TRACK
- *   ACTIVE --(usage 80-100% of target, &le;7 days left)--&gt; AT_RISK
+ *   ACTIVE --(usage &lt; 85% of target, comfortable margin)--&gt; ON_TRACK
+ *   ACTIVE --(usage &ge; 85% of target, &le;7 days left)--&gt; AT_RISK
  *   ACTIVE --(usage &gt; 100% of target)----------------&gt; MISSED
  *   ACTIVE --(period ends, usage &le; target)----------&gt; ACHIEVED
  * </pre>
