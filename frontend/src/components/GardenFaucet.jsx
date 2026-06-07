@@ -1,38 +1,116 @@
-// GardenFaucet.jsx
 export default function GardenFaucet({ isOn, handleToggle }) {
   return (
-    <svg viewBox="0 0 220 340" width={220} height={340} onClick={handleToggle}>
+    <svg
+      viewBox="0 0 220 340"
+      width={220}
+      height={340}
+      onClick={handleToggle}
+      style={{
+        cursor: 'pointer',
+        userSelect: 'none',
+        display: 'block',
+      }}
+    >
+      <defs>
+        <style>{`
+          @keyframes drip {
+            0% {
+              transform: translateY(0px);
+              opacity: 1;
+            }
+            100% {
+              transform: translateY(70px);
+              opacity: 0;
+            }
+          }
 
-      {/* exterior wall */}
-      <rect x="40" y="70" width="140" height="160" rx="12" fill="#c8e6c9" />
+          .drop1 {
+            animation: drip 0.8s linear infinite;
+          }
 
-      {/* spigot base */}
-      <rect x="90" y="120" width="40" height="20" fill="#8d6e63" />
+          .drop2 {
+            animation: drip 0.8s linear infinite 0.3s;
+          }
 
-      {/* valve handle */}
-      <circle cx="110" cy="130" r="16" fill="#a1887f" />
-      <line x1="110" y1="118" x2="110" y2="142" stroke="#5d4037" strokeWidth="4" />
+          .drop3 {
+            animation: drip 0.8s linear infinite 0.6s;
+          }
+        `}</style>
+      </defs>
 
-      {/* hose */}
-      <rect x="110" y="140" width="10" height="60" fill="#546e7a" />
+      {/* Reel */}
+      <circle
+        cx="110"
+        cy="140"
+        r="55"
+        fill="#90a4ae"
+      />
 
-      {/* strong jet stream */}
+      {/* Hose coils */}
+      <circle
+        cx="110"
+        cy="140"
+        r="45"
+        fill="none"
+        stroke="#4caf50"
+        strokeWidth="8"
+      />
+
+      <circle
+        cx="110"
+        cy="140"
+        r="30"
+        fill="none"
+        stroke="#66bb6a"
+        strokeWidth="8"
+      />
+
+      <circle
+        cx="110"
+        cy="140"
+        r="15"
+        fill="none"
+        stroke="#81c784"
+        strokeWidth="8"
+      />
+
+      {/* Hose extension */}
+      <path
+        d="M165 140 C190 140 190 180 175 200"
+        fill="none"
+        stroke="#4caf50"
+        strokeWidth="8"
+        strokeLinecap="round"
+      />
+
+      {/* Nozzle */}
+      <rect
+        x="165"
+        y="195"
+        width="20"
+        height="35"
+        rx="4"
+        fill="#78909c"
+      />
+
       {isOn && (
-        <g>
-          <rect
-            x="112"
-            y="200"
-            width="6"
-            height="90"
-            fill="#29b6f6"
-            opacity="0.9"
-          />
+        <>
+          <ellipse className="drop1" cx="175" cy="230" rx="4" ry="7" fill="#4fc3f7" />
+          <ellipse className="drop2" cx="171" cy="245" rx="3" ry="6" fill="#81d4fa" />
+          <ellipse className="drop3" cx="179" cy="260" rx="3" ry="5" fill="#b3e5fc" />
+        </>
+      )}
 
-          {/* splash drops */}
-          <circle cx="118" cy="240" r="4" fill="#4dd0e1" opacity="0.8" />
-          <circle cx="108" cy="260" r="3" fill="#80deea" opacity="0.7" />
-          <circle cx="122" cy="280" r="2.5" fill="#b2ebf2" opacity="0.6" />
-        </g>
+      {!isOn && (
+        <text
+          x="110"
+          y="310"
+          textAnchor="middle"
+          fill="#90a4ae"
+          fontSize="12"
+        >
+          click hose reel to start
+        </text>
       )}
     </svg>
   );
