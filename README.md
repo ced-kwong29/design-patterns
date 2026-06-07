@@ -19,33 +19,97 @@ A Spring Boot application for tracking household water consumption, detecting an
 
 ```mermaid
 graph TD
-    subgraph Controller["Controller Layer"]
+    subgraph Controllers["Controller Components"]
+        RC[ReportController]
         UC[UsageController]
+        DC[DashboardController]
         GC[GoalController]
         AC[AlertController]
-        RC[ReportController]
-        DC[DashboardController]
     end
 
-    subgraph Service["Service Layer"]
-        US[UsageService]
-        GS[GoalService]
-        AS[AnomalyService]
-        RS[ReportService]
-        WDF[WaterDashboardFacade]
-        UCI[UsageCommandInvoker]
-        DAC[DefaultAlertCoordinator]
+    subgraph CoreServices["Core Services"]
+        WDF[WaterDashboardFacade\naggregates 4 subsystems]
+        US[UsageService\nlog, summarise,\nbenchmark]
+        RS[ReportService\nfactory, caching]
+        AS[AnomalyService\ndetect, persist]
+        GS[GoalService\ncreate, progress, FSM]
     end
 
-    subgraph Persistence["Persistence Layer"]
+    subgraph EventsAndAsync["Events & Async"]
+        EP[ApplicationEventPublisher]
+        ADL[AnomalyDetectionListener]
+        WSPL[WebSocketPushListener]
+        GPL[GoalProgressListener]
+    end
+
+    subgraph ScheduledJobs["Scheduled Jobs"]
+        WDJ[WeeklyDigestJob\nSunday, 08:00]
+        ADJ[AnomalyDetectionJob\nNightly, 02:00]
+        GSRJ[GoalStatusRecalcJob\nevery 6h]
+        DCJ[DataCleanupJob\nmonthly, 1st]
+    end
+
+    subgraph PatternImpl["Pattern Implementations"]
+        COR[Chain of Responsibility\nRangeValidator →\nCategoryValidator]
+        DEC[Decorator Stack\nRegional →\nSeasonal → Base]
+        STRAT[Strategy Pattern\nSpikeDetector,\nSustainedElevationDetector]
+        BUILD[Builder Pattern\nUsageEntryBuilder,\nGoalBuilder,\nAlertBuilder]
+    end
+
+    subgraph Repository["Repository Layer"]
         UER[UsageEntryRepository]
         GR[GoalRepository]
         AR[AlertRepository]
         RBR[RegionalBenchmarkRepository]
     end
 
-    Controller --> Service
-    Service --> Persistence
+    %% Controller connections
+    RC --> RS
+    UC --> US
+    DC --> WDF
+    GC --> GS
+    AC --> AR
+
+    %% Facade aggregation
+    WDF --> US
+    WDF --> RS
+    WDF --> GR
+    WDF --> AR
+
+    %% Service to Repository
+    US --> UER
+    US --> RBR
+    RS --> UER
+    AS --> UER
+    AS --> AR
+    GS --> GR
+    GS --> UER
+
+    %% Service to Events
+    US --> EP
+    GS --> EP
+    AS --> EP
+    EP --> ADL
+    EP --> WSPL
+    EP --> GPL
+
+    %% Listeners back to services
+    ADL --> AS
+    GPL --> GS
+
+    %% Services to Pattern Implementations
+    US --> COR
+    US --> DEC
+    AS --> STRAT
+    US --> BUILD
+    GS --> BUILD
+    AS --> BUILD
+
+    %% Scheduled Jobs to Services
+    WDJ --> RS
+    ADJ --> AS
+    GSRJ --> GS
+    DCJ --> UER
 ```
 
 Each controller interacts with specific services and repositories. The diagrams below show each controller's dependency path in isolation:
