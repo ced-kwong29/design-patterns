@@ -1,5 +1,7 @@
 package com.csen_359.design_patterns.domain;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -9,13 +11,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
 
 /**
- * An anomaly alert raised against a user's usage. Soft-deleted by setting
- * {@code acknowledgedAt} rather than removing the row.
- *
- * <p>Construct via {@code AlertBuilder} (Builder pattern).
+ * An anomaly alert raised against a user's usage. (Builder pattern).
  */
 @Entity
 @Table(name = "alerts")
@@ -46,7 +44,6 @@ public class Alert {
     private LocalDateTime acknowledgedAt;
 
     public Alert() {
-        // required by JPA; prefer AlertBuilder for application code
     }
 
     @PrePersist

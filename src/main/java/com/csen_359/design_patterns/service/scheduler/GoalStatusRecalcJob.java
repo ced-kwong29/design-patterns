@@ -1,14 +1,14 @@
 package com.csen_359.design_patterns.service.scheduler;
 
-import com.csen_359.design_patterns.service.GoalService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import com.csen_359.design_patterns.service.GoalService;
+
 /**
- * Recalculates the FSM state of every active goal, every 6 hours. Cron is
- * configurable via {@code watermonitor.scheduler.goal-recalc-cron}.
+ * Recalculates the FSM state of every active goal, every 6 hours.
  */
 @Component
 public class GoalStatusRecalcJob {

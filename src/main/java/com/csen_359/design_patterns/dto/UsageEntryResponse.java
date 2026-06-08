@@ -1,12 +1,10 @@
 package com.csen_359.design_patterns.dto;
 
-import com.csen_359.design_patterns.domain.UsageCategory;
-import com.csen_359.design_patterns.domain.UsageEntry;
 import java.time.LocalDateTime;
 
-/**
- * API view of a {@link UsageEntry}.
- */
+import com.csen_359.design_patterns.domain.UsageCategory;
+import com.csen_359.design_patterns.domain.UsageEntry;
+ 
 public record UsageEntryResponse(
         Long id,
         Long userId,

@@ -1,15 +1,15 @@
 package com.csen_359.design_patterns.service.scheduler;
 
-import com.csen_359.design_patterns.service.AnomalyService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import com.csen_359.design_patterns.service.AnomalyService;
+
 /**
  * Nightly job (02:00) - recomputes the 30-day baseline per category and flags
- * sustained elevation. Cron is configurable via
- * {@code watermonitor.scheduler.anomaly-detection-cron}.
+ * sustained elevation.
  */
 @Component
 public class AnomalyDetectionJob {

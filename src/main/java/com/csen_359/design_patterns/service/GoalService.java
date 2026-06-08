@@ -1,8 +1,17 @@
 package com.csen_359.design_patterns.service;
 
-import com.csen_359.design_patterns.service.builder.GoalBuilder;
-import com.csen_359.design_patterns.service.mediator.AlertCoordinator;
-import com.csen_359.design_patterns.service.singleton.ConservationThresholds;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.csen_359.design_patterns.domain.Goal;
 import com.csen_359.design_patterns.domain.GoalState;
 import com.csen_359.design_patterns.domain.UsageEntry;
@@ -11,22 +20,10 @@ import com.csen_359.design_patterns.event.GoalStatusChangedEvent;
 import com.csen_359.design_patterns.event.UsageLoggedEvent;
 import com.csen_359.design_patterns.repository.GoalRepository;
 import com.csen_359.design_patterns.repository.UsageEntryRepository;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.csen_359.design_patterns.service.builder.GoalBuilder;
+import com.csen_359.design_patterns.service.mediator.AlertCoordinator;
+import com.csen_359.design_patterns.service.singleton.ConservationThresholds;
 
-/**
- * Manages conservation goals and the State-pattern FSM that drives their
- * {@link GoalState}. Transition rules are kept here, explicit and isolated
- * from the rest of the business logic, so they can be unit tested directly.
- */
 @Service
 public class GoalService {
 
@@ -100,21 +97,12 @@ public class GoalService {
                 affected.size(), event.userId());
     }
 
-    /**
-     * Entry point for {@code GoalStatusRecalcJob} - recompute every active
-     * goal's state.
-     */
     @Transactional
     public void recalculateAll() {
         List<Goal> active = goalRepository.findByStateNot(GoalState.ACHIEVED);
         active.forEach(this::recalculateState);
     }
 
-    /**
-     * Recomputes a single goal's state and emits a {@link GoalStatusChangedEvent}
-     * if it transitioned. Also notifies the Mediator ({@link AlertCoordinator})
-     * when a goal moves to AT_RISK or MISSED so it can create user-visible alerts.
-     */
     @Transactional
     public void recalculateState(Goal goal) {
         GoalState previous = goal.getState();
@@ -135,11 +123,6 @@ public class GoalService {
         }
     }
 
-    /**
-     * The State-pattern transition function. Uses {@link ConservationThresholds}
-     * (Singleton) for the risk threshold percentage. See {@link GoalState} for
-     * the full transition table.
-     */
     GoalState nextState(Goal goal) {
         if (goal.getState().isTerminal()) {
             return goal.getState();
@@ -161,7 +144,6 @@ public class GoalService {
         if (progress >= thresholds.getGoalRiskThresholdPct() * 100.0 && daysLeft <= 7) {
             return GoalState.AT_RISK;
         }
-        // Comfortable margin remaining.
         return GoalState.ON_TRACK;
     }
 }

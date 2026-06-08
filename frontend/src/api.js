@@ -6,7 +6,6 @@ async function request(path, options = {}) {
     ...options,
   });
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-  // Handle 204 No Content or empty bodies
   const text = await res.text();
   return text ? JSON.parse(text) : null;
 }
@@ -42,5 +41,5 @@ export const getAlerts = (userId) => request(`/alerts?userId=${userId}`);
 // Reports
 export const getReport = (period, userId) => request(`/reports/${period}?userId=${userId}`);
 
-// Dashboard (Facade pattern - single call for all dashboard data)
+// Dashboard 
 export const getDashboard = (userId) => request(`/dashboard?userId=${userId}`);

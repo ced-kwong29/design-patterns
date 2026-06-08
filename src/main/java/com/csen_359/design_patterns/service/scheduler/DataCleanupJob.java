@@ -1,17 +1,18 @@
 package com.csen_359.design_patterns.service.scheduler;
 
-import com.csen_359.design_patterns.repository.UsageEntryRepository;
 import java.time.LocalDateTime;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.csen_359.design_patterns.repository.UsageEntryRepository;
+
 /**
  * Monthly job (1st, 03:00) - archives usage entries older than two years to a
- * cold-storage table. Cron is configurable via
- * {@code watermonitor.scheduler.data-cleanup-cron}.
+ * cold-storage table. 
  */
 @Component
 public class DataCleanupJob {

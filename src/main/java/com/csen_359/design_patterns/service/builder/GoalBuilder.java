@@ -1,16 +1,14 @@
 package com.csen_359.design_patterns.service.builder;
 
+import java.time.LocalDate;
+
 import com.csen_359.design_patterns.domain.Goal;
 import com.csen_359.design_patterns.domain.GoalPeriod;
 import com.csen_359.design_patterns.domain.GoalState;
 import com.csen_359.design_patterns.domain.UsageCategory;
-import java.time.LocalDate;
 
 /**
  * Builder pattern - fluent construction of {@link Goal}.
- *
- * <p>A new goal always starts in {@link GoalState#ACTIVE}. {@code category}
- * is optional - leaving it null produces an overall-usage goal.
  */
 public final class GoalBuilder {
 

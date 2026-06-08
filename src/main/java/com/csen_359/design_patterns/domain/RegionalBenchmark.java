@@ -10,7 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 /**
- * Seeded, read-only reference data: average daily water usage per region,
+ * reference data: average daily water usage per region,
  * category and season. Consumed by the regional benchmark decorator.
  */
 @Entity
@@ -36,7 +36,6 @@ public class RegionalBenchmark {
     private Season season;
 
     protected RegionalBenchmark() {
-        // required by JPA
     }
 
     public Long getId() {

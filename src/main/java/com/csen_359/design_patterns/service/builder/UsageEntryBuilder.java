@@ -1,24 +1,12 @@
 package com.csen_359.design_patterns.service.builder;
 
-import com.csen_359.design_patterns.domain.UsageCategory;
-import com.csen_359.design_patterns.domain.UsageEntry;
 import java.time.LocalDateTime;
 
+import com.csen_359.design_patterns.domain.UsageCategory;
+import com.csen_359.design_patterns.domain.UsageEntry;
+
 /**
- * Builder pattern - fluent construction of {@link UsageEntry}.
- *
- * <p>{@code userId} and {@code category} are mandatory; {@code build()} throws
- * if either is missing. {@code loggedAt} defaults to "now"; {@code notes} and
- * {@code durationMinutes} are optional and default to {@code null}.
- *
- * <pre>{@code
- * UsageEntry entry = UsageEntryBuilder.builder()
- *         .userId(1L)
- *         .category(UsageCategory.SHOWER)
- *         .litres(45.0)
- *         .durationMinutes(8)
- *         .build();
- * }</pre>
+ * Builder pattern - fluent construction of UsageEntry
  */
 public final class UsageEntryBuilder {
 

@@ -8,10 +8,6 @@ import com.csen_359.design_patterns.service.UsageService;
 /**
  * Command pattern - Concrete Command: log a water usage entry.
  *
- * <p>{@code execute()} delegates to {@link UsageService#logUsage} and captures
- * the saved entry. {@code undo()} deletes it by primary key, reversing the
- * action completely (including the Observer fan-out this would normally trigger
- * — production code would also publish a compensating event here).
  */
 public class LogUsageCommand implements UsageCommand {
 
@@ -42,7 +38,6 @@ public class LogUsageCommand implements UsageCommand {
         }
     }
 
-    /** Returns the persisted entry after {@code execute()} has been called. */
     public UsageEntry getResult() {
         return savedEntry;
     }

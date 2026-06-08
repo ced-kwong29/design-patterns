@@ -1,5 +1,8 @@
 package com.csen_359.design_patterns.domain;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -9,15 +12,10 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 /**
- * A water conservation goal. {@code state} is driven by the FSM in
- * {@code GoalService} (State pattern).
- *
- * <p>A {@code null} {@code category} means the goal covers overall usage.
- * Construct via {@code GoalBuilder} (Builder pattern).
+ * A water conservation goal. (State pattern).
+ * Construct via Builder pattern.
  */
 @Entity
 @Table(name = "goals")

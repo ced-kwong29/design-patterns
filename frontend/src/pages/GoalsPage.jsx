@@ -24,7 +24,7 @@ export default function GoalsPage() {
 
   useEffect(load, [load]);
 
-  // WebSocket: auto-reload when a goal state changes
+  // auto-reload when a goal state changes
   useWebSocket({ onGoal: load });
 
   function computeEndDate(period) {

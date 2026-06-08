@@ -1,24 +1,19 @@
 package com.csen_359.design_patterns.service.iterator;
 
-import com.csen_359.design_patterns.domain.UsageEntry;
-import com.csen_359.design_patterns.repository.UsageEntryRepository;
 import java.time.LocalDateTime;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+
+import com.csen_359.design_patterns.domain.UsageEntry;
+import com.csen_359.design_patterns.repository.UsageEntryRepository;
 
 /**
  * Iterator pattern - pages through a user's usage history without loading the
  * entire result set into memory.
- *
- * <p>Each call to {@code next()} fetches one page from the database. Callers
- * process entries page-by-page using a standard {@code while (it.hasNext())}
- * loop without knowing how pagination or sorting are implemented.
- *
- * <p>Must be used within an active Spring transaction when the underlying
- * repository cursor requires one (e.g., for streaming).
  */
 public class UsagePageIterator implements Iterator<List<UsageEntry>> {
 

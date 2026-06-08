@@ -1,13 +1,10 @@
 package com.csen_359.design_patterns.service.report;
 
-import com.csen_359.design_patterns.domain.UsageCategory;
 import java.time.LocalDate;
 import java.util.Map;
 
-/**
- * The output of the {@link ReportGenerator} template method - the JSON shape
- * returned by {@code GET /api/reports/weekly} and {@code /monthly}.
- */
+import com.csen_359.design_patterns.domain.UsageCategory;
+
 public record Report(
         String type,
         LocalDate from,

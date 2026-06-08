@@ -1,27 +1,5 @@
 package com.csen_359.design_patterns.service;
 
-import com.csen_359.design_patterns.service.builder.UsageEntryBuilder;
-import com.csen_359.design_patterns.service.calculation.BaseUsageCalculator;
-import com.csen_359.design_patterns.service.calculation.RegionalBenchmarkDecorator;
-import com.csen_359.design_patterns.service.calculation.SeasonalAdjustmentDecorator;
-import com.csen_359.design_patterns.service.calculation.UsageCalculator;
-import com.csen_359.design_patterns.service.composite.IndividualUsage;
-import com.csen_359.design_patterns.service.composite.UsageGroup;
-import com.csen_359.design_patterns.service.composite.UsageNode;
-import com.csen_359.design_patterns.service.visitor.CategoryBreakdownVisitor;
-import com.csen_359.design_patterns.service.visitor.TotalVolumeVisitor;
-import com.csen_359.design_patterns.service.visitor.UsageStatisticsApplier;
-import com.csen_359.design_patterns.domain.RegionalBenchmark;
-import com.csen_359.design_patterns.domain.Season;
-import com.csen_359.design_patterns.domain.UsageCategory;
-import com.csen_359.design_patterns.domain.UsageEntry;
-import com.csen_359.design_patterns.dto.BenchmarkResponse;
-import com.csen_359.design_patterns.dto.LogUsageRequest;
-import com.csen_359.design_patterns.dto.UsageSummaryResponse;
-import com.csen_359.design_patterns.event.UsageLoggedEvent;
-import com.csen_359.design_patterns.repository.RegionalBenchmarkRepository;
-import com.csen_359.design_patterns.repository.UsageEntryRepository;
-import com.csen_359.design_patterns.service.validation.UsageEntryHandler;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.io.Writer;
@@ -32,22 +10,33 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Core write path for usage entries. {@link #logUsage(LogUsageRequest)} is the
- * spine of the request-flow diagram in the plan and wires together four
- * patterns:
- *
- * <ol>
- *   <li><b>Builder</b> - assembles the {@link UsageEntry}.</li>
- *   <li><b>Chain of Responsibility</b> - the injected validation chain.</li>
- *   <li><b>Decorator</b> - the calculation stack for adjusted litres.</li>
- *   <li><b>Observer</b> - publishes {@link UsageLoggedEvent}.</li>
- * </ol>
- */
+import com.csen_359.design_patterns.domain.RegionalBenchmark;
+import com.csen_359.design_patterns.domain.Season;
+import com.csen_359.design_patterns.domain.UsageCategory;
+import com.csen_359.design_patterns.domain.UsageEntry;
+import com.csen_359.design_patterns.dto.BenchmarkResponse;
+import com.csen_359.design_patterns.dto.LogUsageRequest;
+import com.csen_359.design_patterns.dto.UsageSummaryResponse;
+import com.csen_359.design_patterns.event.UsageLoggedEvent;
+import com.csen_359.design_patterns.repository.RegionalBenchmarkRepository;
+import com.csen_359.design_patterns.repository.UsageEntryRepository;
+import com.csen_359.design_patterns.service.builder.UsageEntryBuilder;
+import com.csen_359.design_patterns.service.calculation.BaseUsageCalculator;
+import com.csen_359.design_patterns.service.calculation.RegionalBenchmarkDecorator;
+import com.csen_359.design_patterns.service.calculation.SeasonalAdjustmentDecorator;
+import com.csen_359.design_patterns.service.calculation.UsageCalculator;
+import com.csen_359.design_patterns.service.composite.IndividualUsage;
+import com.csen_359.design_patterns.service.composite.UsageGroup;
+import com.csen_359.design_patterns.service.validation.UsageEntryHandler;
+import com.csen_359.design_patterns.service.visitor.CategoryBreakdownVisitor;
+import com.csen_359.design_patterns.service.visitor.TotalVolumeVisitor;
+import com.csen_359.design_patterns.service.visitor.UsageStatisticsApplier;
+
 @Service
 public class UsageService {
 
@@ -74,7 +63,6 @@ public class UsageService {
 
     @Transactional
     public UsageEntry logUsage(LogUsageRequest request) {
-        // 1. Builder - construct the entry.
         UsageEntry entry = UsageEntryBuilder.builder()
                 .userId(request.userId())
                 .category(request.category())
@@ -84,10 +72,8 @@ public class UsageService {
                 .notes(request.notes())
                 .build();
 
-        // 2. Chain of Responsibility - validate / sanitise / reject.
         validationChain.handle(entry);
 
-        // 3. Decorator - stack adjustments to compute adjusted litres.
         Season season = seasonOf(entry.getLoggedAt().toLocalDate());
         UsageCalculator calculator = new RegionalBenchmarkDecorator(
                 new SeasonalAdjustmentDecorator(new BaseUsageCalculator(), season),
@@ -95,10 +81,8 @@ public class UsageService {
                 regionFactor("DEFAULT", entry.getCategory(), season));
         entry.setAdjustedLitres(calculator.calculate(List.of(entry)));
 
-        // 4. Persist.
         UsageEntry saved = usageEntryRepository.save(entry);
 
-        // 5. Observer - fan out to anomaly / goal / websocket listeners.
         eventPublisher.publishEvent(new UsageLoggedEvent(
                 saved.getId(), saved.getUserId(), saved.getCategory(),
                 saved.getLitres(), saved.getLoggedAt()));
@@ -122,7 +106,7 @@ public class UsageService {
         List<UsageEntry> entries =
                 usageEntryRepository.findByUserIdAndLoggedAtBetween(userId, from, to);
 
-        // Visitor pattern - compute total and per-category breakdown via visitors.
+        // Visitor pattern
         TotalVolumeVisitor totalVisitor = new TotalVolumeVisitor();
         CategoryBreakdownVisitor categoryVisitor = new CategoryBreakdownVisitor();
         UsageStatisticsApplier.apply(entries, totalVisitor);
@@ -141,7 +125,6 @@ public class UsageService {
             root.add(categoryGroup);
         }
 
-        // Use the composite root's totalLitres() to verify consistency (logged for debugging).
         double compositeTotal = root.totalLitres();
         assert Math.abs(compositeTotal - totalVisitor.getTotalLitres()) < 0.001;
 
@@ -190,7 +173,6 @@ public class UsageService {
     /**
      * Iterator pattern - streams a date-windowed slice of usage history and
      * writes it as CSV without ever holding the whole result set in memory.
-     * Must run inside a transaction so the underlying cursor stays open.
      */
     @Transactional(readOnly = true)
     public void exportCsv(Long userId, LocalDateTime from, LocalDateTime to, Writer writer) {
@@ -218,7 +200,6 @@ public class UsageService {
         }
     }
 
-    /** Northern-hemisphere season for a given date. */
     private static Season seasonOf(LocalDate date) {
         return switch (date.getMonth()) {
             case DECEMBER, JANUARY, FEBRUARY -> Season.WINTER;
@@ -228,11 +209,6 @@ public class UsageService {
         };
     }
 
-    /**
-     * Weights a litre by regional scarcity: a region whose seeded average is
-     * below the reference uses water more sparingly, so each litre there counts
-     * for more. Falls back to 1.0 when the region/category/season is unseeded.
-     */
     private double regionFactor(String regionCode, UsageCategory category, Season season) {
         Optional<RegionalBenchmark> benchmark = regionalBenchmarkRepository
                 .findByRegionCodeAndCategoryAndSeason(regionCode, category, season);

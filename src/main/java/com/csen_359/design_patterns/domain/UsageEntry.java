@@ -1,5 +1,7 @@
 package com.csen_359.design_patterns.domain;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -9,14 +11,10 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
 
 /**
- * A single logged water usage entry. Immutable after creation; only
- * {@code adjustedLitres} is written once by the Decorator calculation pipeline.
+ * A single logged water usage entry.
  *
- * <p>Construct via {@code UsageEntryBuilder} (Builder pattern) rather than
- * calling the setters directly.
  */
 @Entity
 @Table(name = "usage_entries")
@@ -45,7 +43,7 @@ public class UsageEntry {
     @Column(length = 500)
     private String notes;
 
-    /** Set by the calculation package (Decorator pipeline). */
+    /** Set by the calculation package (Decorator). */
     @Column(name = "adjusted_litres")
     private Double adjustedLitres;
 
@@ -53,7 +51,6 @@ public class UsageEntry {
     private LocalDateTime createdAt;
 
     public UsageEntry() {
-        // required by JPA; prefer UsageEntryBuilder for application code
     }
 
     @PrePersist

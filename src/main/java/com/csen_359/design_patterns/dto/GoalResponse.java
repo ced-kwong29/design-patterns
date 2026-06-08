@@ -1,14 +1,12 @@
 package com.csen_359.design_patterns.dto;
 
+import java.time.LocalDate;
+
 import com.csen_359.design_patterns.domain.Goal;
 import com.csen_359.design_patterns.domain.GoalPeriod;
 import com.csen_359.design_patterns.domain.GoalState;
 import com.csen_359.design_patterns.domain.UsageCategory;
-import java.time.LocalDate;
 
-/**
- * API view of a {@link Goal}, including its current FSM state and progress.
- */
 public record GoalResponse(
         Long id,
         Long userId,

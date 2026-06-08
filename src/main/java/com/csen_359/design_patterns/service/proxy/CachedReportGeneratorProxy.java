@@ -1,20 +1,13 @@
 package com.csen_359.design_patterns.service.proxy;
 
-import com.csen_359.design_patterns.service.report.Report;
-import com.csen_359.design_patterns.service.report.ReportProvider;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
+import com.csen_359.design_patterns.service.report.Report;
+import com.csen_359.design_patterns.service.report.ReportProvider;
+
 /**
- * Proxy pattern - a caching proxy for an expensive {@link ReportProvider}.
- *
- * <p>Wraps any {@code ReportProvider} and returns the cached result for
- * {@code TTL} after the first call for a given user. The real generator is only
- * invoked on a cache miss. Callers use the identical {@link ReportProvider}
- * interface and are unaware caching is happening — the proxy is transparent.
- *
- * <p>One proxy instance should be created per user and report type to keep
- * cached results correctly scoped.
+ * Proxy pattern - a caching proxy for an expensive ReportProvider.
  */
 public class CachedReportGeneratorProxy implements ReportProvider {
 

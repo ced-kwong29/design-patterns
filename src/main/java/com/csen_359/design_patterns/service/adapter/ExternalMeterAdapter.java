@@ -1,22 +1,17 @@
 package com.csen_359.design_patterns.service.adapter;
 
-import com.csen_359.design_patterns.domain.UsageCategory;
-import com.csen_359.design_patterns.domain.UsageEntry;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Map;
+
 import org.springframework.stereotype.Component;
+
+import com.csen_359.design_patterns.domain.UsageCategory;
+import com.csen_359.design_patterns.domain.UsageEntry;
 
 /**
  * Adapter pattern - bridges an external utility meter's data format to the
  * application's internal {@link UsageEntry} domain object.
- *
- * <p>Responsibilities:
- * <ul>
- *   <li>Gallons → litres unit conversion</li>
- *   <li>Proprietary usage-type codes → {@link UsageCategory}</li>
- *   <li>Unix-epoch {@code Instant} → {@code LocalDateTime}</li>
- * </ul>
  */
 @Component
 public class ExternalMeterAdapter implements WaterMeterAdapter {

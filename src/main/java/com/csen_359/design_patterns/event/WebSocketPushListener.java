@@ -9,10 +9,8 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 /**
- * Observer - pushes live updates to the dashboard over STOMP/WebSocket.
+ * Observer - pushes live updates to the dashboard over WebSocket.
  *
- * <p>Subscribes to three domain events and fans each one out to its own
- * destination topic. Clients connect at {@code /ws/dashboard}.
  */
 @Component
 public class WebSocketPushListener {

@@ -1,26 +1,23 @@
 package com.csen_359.design_patterns.service.facade;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
 import com.csen_359.design_patterns.domain.Alert;
 import com.csen_359.design_patterns.domain.Goal;
 import com.csen_359.design_patterns.domain.GoalState;
 import com.csen_359.design_patterns.dto.UsageSummaryResponse;
-import com.csen_359.design_patterns.service.report.Report;
 import com.csen_359.design_patterns.repository.AlertRepository;
 import com.csen_359.design_patterns.repository.GoalRepository;
 import com.csen_359.design_patterns.service.ReportService;
 import com.csen_359.design_patterns.service.UsageService;
-import java.time.LocalDateTime;
-import java.util.List;
-import org.springframework.stereotype.Service;
+import com.csen_359.design_patterns.service.report.Report;
 
 /**
  * Facade pattern - hides the complexity of coordinating four subsystems behind
- * a single {@link #getDashboard(long)} call.
- *
- * <p>Dashboard controllers depend only on this class. Each subsystem can be
- * refactored independently; callers see no change. Contrast with a controller
- * that directly wires UsageService, GoalRepository, AlertRepository, and
- * ReportService and would need updating for every subsystem rename.
+ * a single dashboard
  */
 @Service
 public class WaterDashboardFacade {

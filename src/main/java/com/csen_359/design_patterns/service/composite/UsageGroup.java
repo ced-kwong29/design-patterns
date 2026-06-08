@@ -4,12 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Composite pattern - Composite: a named group of {@link UsageNode}s.
+ * Composite pattern - Composite: a named group of UsageNodes.
  *
- * <p>Groups can be nested arbitrarily — e.g., "Indoor" contains shower, bath,
- * laundry, and dishwasher leaves; "All Household" contains "Indoor" and
- * "Outdoor" groups. {@code totalLitres()} recurses to any depth, so callers
- * never need to know the tree structure.
  */
 public class UsageGroup implements UsageNode {
 

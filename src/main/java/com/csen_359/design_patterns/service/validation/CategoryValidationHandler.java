@@ -6,9 +6,6 @@ import com.csen_359.design_patterns.domain.UsageEntry;
 /**
  * Chain of Responsibility node - ensures a usage category is present.
  *
- * <p>The category is a typed enum, so an unknown string is already rejected
- * during request binding; this handler guards the remaining null case and is
- * the natural home for any future category-specific rules.
  */
 public class CategoryValidationHandler extends UsageEntryHandler {
 

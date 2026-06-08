@@ -1,23 +1,24 @@
 package com.csen_359.design_patterns.service.scheduler;
 
-import com.csen_359.design_patterns.service.bridge.DigestNotification;
-import com.csen_359.design_patterns.service.bridge.NotificationChannel;
-import com.csen_359.design_patterns.service.report.Report;
-import com.csen_359.design_patterns.domain.UsageCategory;
-import com.csen_359.design_patterns.repository.UsageEntryRepository;
-import com.csen_359.design_patterns.service.ReportService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import com.csen_359.design_patterns.domain.UsageCategory;
+import com.csen_359.design_patterns.repository.UsageEntryRepository;
+import com.csen_359.design_patterns.service.ReportService;
+import com.csen_359.design_patterns.service.bridge.DigestNotification;
+import com.csen_359.design_patterns.service.bridge.NotificationChannel;
+import com.csen_359.design_patterns.service.report.Report;
+
 /**
  * Sunday-morning job (08:00) - runs the weekly report pipeline and delivers
- * the digest via the Bridge notification stack. Cron is configurable via
- * {@code watermonitor.scheduler.weekly-digest-cron}.
+ * the digest via the Bridge notification stack.
  */
 @Component
 public class WeeklyDigestJob {

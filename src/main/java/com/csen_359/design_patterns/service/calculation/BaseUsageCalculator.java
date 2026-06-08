@@ -1,7 +1,8 @@
 package com.csen_359.design_patterns.service.calculation;
 
-import com.csen_359.design_patterns.domain.UsageEntry;
 import java.util.List;
+
+import com.csen_359.design_patterns.domain.UsageEntry;
 
 /**
  * Decorator pattern - the concrete component: a plain sum of raw litres,

@@ -10,7 +10,6 @@ public class RangeValidationHandler extends UsageEntryHandler {
     /** No sane single entry exceeds this many litres. */
     private static final double MAX_LITRES = 10_000.0;
 
-    /** No household fixture realistically sustains more than this flow. */
     private static final double MAX_LITRES_PER_MINUTE = 60.0;
 
     @Override

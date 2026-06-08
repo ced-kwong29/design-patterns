@@ -1,18 +1,15 @@
 package com.csen_359.design_patterns.service.mediator;
 
-import com.csen_359.design_patterns.service.builder.AlertBuilder;
-import com.csen_359.design_patterns.domain.AlertType;
-import com.csen_359.design_patterns.domain.UsageCategory;
-import com.csen_359.design_patterns.repository.AlertRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.csen_359.design_patterns.domain.AlertType;
+import com.csen_359.design_patterns.domain.UsageCategory;
+import com.csen_359.design_patterns.repository.AlertRepository;
+import com.csen_359.design_patterns.service.builder.AlertBuilder;
+
 /**
  * Mediator pattern - the Concrete Mediator.
- *
- * <p>Translates subsystem events into user-visible alerts. Subsystems call
- * methods on the {@link AlertCoordinator} interface and have no reference to
- * the alert repository, the builder, or to one another.
  */
 @Service
 public class DefaultAlertCoordinator implements AlertCoordinator {

@@ -30,7 +30,7 @@ export default function UsagePage() {
 
   useEffect(reload, [reload]);
 
-  // WebSocket: auto-reload when new usage is logged
+  // auto-reload when new usage is logged
   useWebSocket({ onUsage: reload });
 
   async function handleUndo() {

@@ -12,8 +12,6 @@ export default function AlertsPage() {
   }, []);
 
   useEffect(load, [load]);
-
-  // WebSocket: auto-reload when a new alert arrives
   useWebSocket({ onAlert: load });
 
   if (error) return <p style={{ color: 'red' }}>{error}</p>;

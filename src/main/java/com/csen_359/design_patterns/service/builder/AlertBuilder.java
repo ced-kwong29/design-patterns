@@ -7,7 +7,6 @@ import com.csen_359.design_patterns.domain.UsageCategory;
 /**
  * Builder pattern - fluent construction of {@link Alert}.
  *
- * <p>{@code userId}, {@code type} and {@code message} are mandatory.
  */
 public final class AlertBuilder {
 

@@ -4,11 +4,7 @@ import useWebSocket from '../useWebSocket';
 import { USER_ID } from '../constants';
 
 /**
- * Facade pattern on the frontend - a single API call fetches the entire
- * dashboard view (usage summary, active goals, recent alerts, latest report).
- *
- * Also demonstrates WebSocket integration: the page auto-refreshes when
- * real-time events arrive from the backend Observer pattern.
+ * Facade pattern: a single API call fetches the entire dashboard view
  */
 export default function DashboardPage() {
   const [data, setData] = useState(null);
@@ -22,7 +18,7 @@ export default function DashboardPage() {
 
   useEffect(load, [load]);
 
-  // WebSocket: auto-reload when any event fires
+  // auto-reload when any event fires
   useWebSocket({
     onUsage: load,
     onAlert: load,

@@ -1,6 +1,5 @@
 package com.csen_359.design_patterns.event;
 
-import com.csen_359.design_patterns.service.GoalService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
@@ -8,9 +7,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
+import com.csen_359.design_patterns.service.GoalService;
+
 /**
- * Observer - reacts to a {@link UsageLoggedEvent} by re-running the goal FSM
- * for any goals the new usage affects.
+ * Observer
  */
 @Component
 public class GoalProgressListener {

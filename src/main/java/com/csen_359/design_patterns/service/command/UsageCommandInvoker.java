@@ -2,14 +2,11 @@ package com.csen_359.design_patterns.service.command;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+
 import org.springframework.stereotype.Component;
 
 /**
  * Command pattern - the Invoker.
- *
- * <p>Executes commands and maintains a history stack for undo. Callers never
- * call {@code execute()} directly on a command — they ask the invoker, which
- * keeps the history transparent to the rest of the application.
  */
 @Component
 public class UsageCommandInvoker {

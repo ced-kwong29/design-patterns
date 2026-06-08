@@ -2,7 +2,7 @@ package com.csen_359.design_patterns.service.composite;
 
 import com.csen_359.design_patterns.domain.UsageEntry;
 
-/** Composite pattern - Leaf: wraps a single {@link UsageEntry}. */
+/** Composite pattern - Leaf: wraps a single UsageEntry. */
 public class IndividualUsage implements UsageNode {
 
     private final UsageEntry entry;
