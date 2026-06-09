@@ -4,6 +4,24 @@ A Spring Boot application for tracking household water consumption, detecting an
 
 ---
 
+## Getting Started
+
+**Backend** (Spring Boot on port 8080):
+
+```bash
+./start-backend.sh
+```
+
+**Frontend** (React + Vite dev server):
+
+```bash
+./start-frontend.sh
+```
+
+The frontend script installs dependencies automatically on first run.
+
+---
+
 ## Table of Contents
 
 1. [High-Level Architecture](#high-level-architecture)
